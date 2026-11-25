@@ -464,6 +464,53 @@ theorem twin_iff_sq_test {n : ℕ} (hn : 1 ≤ n) :
   · intro h
     exact twin_of_score_row hn ((sq_test_iff hn).mp h)
 
+/-! ## Records: the finite scan, and a null scan is a theorem -/
+
+/-- `n` is a **strict record** if it is positive and its score exceeds every earlier
+    score. The record list is a run-length encoding of the head sequence. -/
+def IsRecord (n : ℕ) : Prop :=
+  1 ≤ n ∧ ∀ m, 1 ≤ m → m < n → score m < score n
+
+/-- Every score is at most the lower member. -/
+theorem score_le_lo (m : ℕ) (hm : 1 ≤ m) : score m ≤ twinLo m := by
+  have hsc : score m ≤ (twinLo m).minFac := min_le_left _ _
+  have hmf : (twinLo m).minFac ≤ twinLo m :=
+    Nat.minFac_le (by have ha : twinLo m = 6 * m - 1 := rfl; omega)
+  omega
+
+/-- **Every twin index is a strict record.** A twin's score is its lower member, larger
+    than any earlier score, so no twin pair can be a non-record that the scan misses. -/
+theorem isRecord_of_twin {n : ℕ} (hn : 1 ≤ n)
+    (hp : Nat.Prime (twinLo n)) (hq : Nat.Prime (twinHi n)) : IsRecord n := by
+  refine ⟨hn, ?_⟩
+  have hscn : score n = twinLo n := by
+    have hdef : score n = min (twinLo n).minFac (twinHi n).minFac := rfl
+    rw [hdef, minFac_eq_self_of_prime hp, minFac_eq_self_of_prime hq]
+    exact Nat.min_eq_left (by
+      have a : twinLo n = 6 * n - 1 := rfl
+      have b : twinHi n = 6 * n + 1 := rfl; omega)
+  intro m hm hmn
+  have h1 : score m ≤ twinLo m := score_le_lo m hm
+  have ha : twinLo m = 6 * m - 1 := rfl
+  have hb : twinLo n = 6 * n - 1 := rfl
+  omega
+
+/-- **A null scan is a theorem.** Checking only the strict records: no record in `[1, N]`
+    passes the square test exactly when there is no twin pair in `[1, N]`. A finished
+    scan is a proof whether it finds anything or not. -/
+theorem no_passing_record_iff_no_twin (N : ℕ) :
+    (∀ n, 1 ≤ n → n ≤ N → IsRecord n → ¬ twinHi n < score n * score n) ↔
+    (∀ n, 1 ≤ n → n ≤ N → ¬ (Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n))) := by
+  constructor
+  · intro hscan n hn hnN htw
+    -- a twin index is a record and passes the test, contradicting the null scan
+    have hrec : IsRecord n := isRecord_of_twin hn htw.1 htw.2
+    have hpass : twinHi n < score n * score n := (twin_iff_sq_test hn).mp htw
+    exact hscan n hn hnN hrec hpass
+  · intro htwins n hn hnN hrec hpass
+    -- a passing record is a twin, contradicting the absence of twins
+    exact htwins n hn hnN ((twin_iff_sq_test hn).mpr hpass)
+
 /-! ## The residual, and its exact strength -/
 
 /-- **The CPNF residual, stated on head values.** Cofinally often, the killer *is* one of
