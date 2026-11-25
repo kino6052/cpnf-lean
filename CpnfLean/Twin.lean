@@ -64,6 +64,18 @@ theorem window_bound {n y : ℕ} (h : n ≤ window y) (hy : 0 < y ^ 2) : 6 * n +
   have : 6 * n ≤ 6 * window y := by omega
   omega
 
+/-- For a largest blocker `y ≥ 7` the window holds at least `y` indices, so the window is
+    never shorter than the largest blocker itself. This is the honest direction of growth:
+    the window rises quadratically, an index bound rises linearly. -/
+theorem window_ge (y : ℕ) (hy : 7 ≤ y) : y ≤ window y := by
+  -- Turn the claim into a multiplication: `y ≤ (y² - 1)/6` iff `y * 6 ≤ y² - 1`.
+  rw [window, Nat.le_div_iff_mul_le (by norm_num : (0 : ℕ) < 6)]
+  -- Enough to show `6y + 1 ≤ y²`, i.e. `y * (y - 6) ≥ 1`.
+  rw [pow_two]
+  obtain ⟨k, rfl⟩ : ∃ k, y = k + 7 := ⟨y - 7, by omega⟩
+  ring_nf
+  omega
+
 /-! ## Blockers that kill every index -/
 
 /-- A pair has no divisibility by two in either member. -/
