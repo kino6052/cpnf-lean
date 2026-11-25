@@ -30,6 +30,9 @@ noncomputable def stage : ℕ → Finset ℕ
   -- Stage `k + 1`: add the least survivor, provided every blocker so far is `≥ 2`.
   | k + 1 => if h : ∀ p ∈ stage k, 2 ≤ p then insert (certifyOf (stage k) h) (stage k) else stage k
 
+/-- The process starts from no blockers. -/
+theorem stage_zero_empty : stage 0 = ∅ := rfl
+
 /-- Every blocker set the process reaches is made of numbers `≥ 2`: at each step the
     guarded `if` is taken, and `above_one_advance` keeps the property. -/
 theorem above_one_stage (k : ℕ) : ∀ p ∈ stage k, 2 ≤ p := by
@@ -83,5 +86,10 @@ theorem always_a_next_step (k : ℕ) : (sieve (stage k)).Nonempty :=
     current stage, so the process does not stop after `k` stages. -/
 theorem certify_survives (k : ℕ) : certify k ∈ sieve (stage k) :=
   (step_stage k).1
+
+/-- The certified number is the *least* survivor: every other survivor is at least it. -/
+theorem next_le (k m : ℕ) (hm : m ∈ sieve (stage k)) : certify k ≤ m :=
+  -- `step_stage` gives `certify k ∈ lowerBounds (sieve (stage k))`, whose bound is implicit.
+  (step_stage k).2 hm
 
 end CPNF
