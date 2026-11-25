@@ -219,6 +219,51 @@ theorem direct_of_twin {n : ℕ} (hn : 1 ≤ n) (hp : Nat.Prime (twinLo n))
   have h1 : 1 ≤ head (Nat.find hex) := one_le_head _
   omega
 
+/-! ## The process enumerates the primes -/
+
+/-- **Every certified number is prime.** A proper divisor `d ≥ 2` of `certify k` would
+    itself survive (divisors of survivors survive), yet be strictly smaller than the least
+    survivor — impossible. So CPNF is prime enumeration, not an approximation of it. -/
+theorem certify_prime (k : ℕ) : Nat.Prime (certify k) := by
+  have hm : certify k ∈ sieve (stage k) := certify_survives k
+  refine Nat.prime_def_lt.mpr ⟨hm.1, ?_⟩
+  -- every proper divisor is `1`
+  intro d hdlt hdvd
+  by_contra hne
+  have hd2 : 2 ≤ d := by
+    rcases Nat.lt_or_ge d 2 with h | h
+    · interval_cases d <;> omega
+    · exact h
+  exact (not_lt_of_ge (certify_le_of_dvd hm hdvd hd2)) hdlt
+
+/-- **No prime is ever skipped.** The stage `k` is exactly the set of primes below
+    `certify k`: one direction is `certify_prime` plus `blocker_lt_certify`, the other
+    says a prime below the killer that was not a blocker would have to survive, which
+    contradicts the killer being least. -/
+theorem stage_eq_primes_lt (k : ℕ) : stage k = (Finset.range (certify k)).filter Nat.Prime := by
+  ext q
+  constructor
+  · -- every blocker is an earlier certified number, hence a prime below the killer
+    intro hq
+    obtain ⟨i, hi, rfl⟩ := (mem_stage_iff k q).mp hq
+    rw [Finset.mem_filter, Finset.mem_range]
+    exact ⟨blocker_lt_certify hq, certify_prime i⟩
+  · -- a prime below the killer must already be a blocker
+    intro hq
+    rw [Finset.mem_filter, Finset.mem_range] at hq
+    obtain ⟨hlt, hprime⟩ := hq
+    by_contra hnot
+    -- otherwise it survives, so it is in the sieve, so it is at least the killer
+    have hsurv : Survives (stage k) q := by
+      intro p hp hpd
+      -- a blocker dividing the prime `q` is `q` itself, so `q` would be a blocker
+      rcases hprime.eq_one_or_self_of_dvd p hpd with h1 | h1
+      · have := above_one_stage k p hp; omega
+      · exact hnot (h1 ▸ hp)
+    have hmem : q ∈ sieve (stage k) := ⟨hprime.two_le, hsurv⟩
+    have := next_le k q hmem
+    omega
+
 /-! ## The residual, and its exact strength -/
 
 /-- **The CPNF residual, stated on head values.** Cofinally often, the killer *is* one of
