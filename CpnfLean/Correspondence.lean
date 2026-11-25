@@ -323,6 +323,52 @@ theorem head_le_iff (k N : ℕ) :
     rintro ⟨n, hn, hnN, hsc⟩
     exact le_trans (head_le hn ((admissible_iff_score hn).mpr hsc)) hnN
 
+/-! ## The record-scan payoff: a passing row is a twin pair -/
+
+/-- For a composite `m`, the least prime factor squared is at most `m`: the least prime
+    factor is at most the remaining cofactor. -/
+theorem minFac_sq_le {m : ℕ} (hm : 2 ≤ m) (hlt : m.minFac < m) :
+    m.minFac * m.minFac ≤ m := by
+  obtain ⟨t, ht⟩ := Nat.minFac_dvd m
+  have htm : t ∣ m := by rw [ht]; exact dvd_mul_left t m.minFac
+  have ht2 : 2 ≤ t := by rcases t with _ | _ | t <;> omega
+  obtain ⟨q, hq, hqd⟩ := Nat.exists_prime_and_dvd (by omega : t ≠ 1)
+  have hqm : q ∣ m := hqd.trans htm
+  have hqge : m.minFac ≤ q := Nat.minFac_le_of_dvd hq.two_le hqm
+  have hqt : q ≤ t := Nat.le_of_dvd (by omega) hqd
+  calc m.minFac * m.minFac ≤ m.minFac * t := Nat.mul_le_mul_left _ (le_trans hqge hqt)
+    _ = m := ht.symm
+
+/-- **A primality test by size.** If `m ≤ B^2` and `m` has no prime factor at most `B`
+    (strictly below `m.minFac`), then `m` is prime: a composite `m` would have
+    `m.minFac^2 ≤ m ≤ B^2`, forcing `m.minFac ≤ B`. -/
+theorem prime_of_minFac_gt {m B : ℕ} (hm : 2 ≤ m) (hB : m ≤ B * B) (h : B < m.minFac) :
+    Nat.Prime m := by
+  rcases Nat.lt_or_ge m.minFac m with hlt | hge
+  · exfalso
+    have hsq := minFac_sq_le hm hlt
+    exact (not_le_of_gt h) (Nat.mul_self_le_mul_self_iff.mp (hsq.trans hB))
+  · have heq : m.minFac = m :=
+      le_antisymm (Nat.minFac_le (by omega : 0 < m)) hge
+    have hp := Nat.minFac_prime (by omega : m ≠ 1)
+    simpa only [heq] using hp
+
+/-- **A passing row is a twin pair.** If the score reaches the lower member, then no
+    prime factor below the lower member divides either member; the cutoff `B = 3n` is
+    strictly below the lower member yet already has `B^2` covering the upper member, so
+    `prime_of_minFac_gt` applies to both. No `n = 1` case is special. -/
+theorem twin_of_score_row {n : ℕ} (hn : 1 ≤ n) (h : twinLo n ≤ score n) :
+    Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n) := by
+  have hlo : twinLo n ≤ (twinLo n).minFac := h.trans (min_le_left _ _)
+  have hhi : twinLo n ≤ (twinHi n).minFac := h.trans (min_le_right _ _)
+  have hcut : 3 * n < twinLo n := by unfold twinLo; omega
+  have h3 : 3 ≤ 3 * n := by omega
+  have hmul : 3 * (3 * n) ≤ (3 * n) * (3 * n) := Nat.mul_le_mul_right (3 * n) h3
+  have hcover : twinHi n ≤ (3 * n) * (3 * n) := by unfold twinHi; omega
+  have horder : twinLo n ≤ twinHi n := by unfold twinLo twinHi; omega
+  exact ⟨prime_of_minFac_gt (by omega) (horder.trans hcover) (hcut.trans_le hlo),
+         prime_of_minFac_gt (by omega) hcover (hcut.trans_le hhi)⟩
+
 /-! ## The residual, and its exact strength -/
 
 /-- **The CPNF residual, stated on head values.** Cofinally often, the killer *is* one of
