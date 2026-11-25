@@ -5,3 +5,4 @@ import CpnfLean.TwinStage
 import CpnfLean.Chase
 import CpnfLean.Count
 import CpnfLean.Head
+import CpnfLean.Correspondence
