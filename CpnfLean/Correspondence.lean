@@ -369,6 +369,101 @@ theorem twin_of_score_row {n : ℕ} (hn : 1 ≤ n) (h : twinLo n ≤ score n) :
   exact ⟨prime_of_minFac_gt (by omega) (horder.trans hcover) (hcut.trans_le hlo),
          prime_of_minFac_gt (by omega) hcover (hcut.trans_le hhi)⟩
 
+/-! ## The square test: one inequality decides the twin question -/
+
+/-- The least prime factor of a prime is the prime itself. -/
+theorem minFac_eq_self_of_prime {m : ℕ} (hm : Nat.Prime m) : m.minFac = m := by
+  have hd : m.minFac ∣ m := Nat.minFac_dvd m
+  rcases hm.eq_one_or_self_of_dvd m.minFac hd with h | h
+  · exact absurd h (Nat.minFac_prime (Nat.Prime.ne_one hm)).ne_one
+  · exact h
+
+/-- At a row that passes, the score is exactly the lower member. -/
+theorem score_eq_lo_of_row {n : ℕ} (hn : 1 ≤ n) (h : twinLo n ≤ score n) :
+    score n = twinLo n := by
+  have hle : twinLo n ≤ (twinLo n).minFac := h.trans (min_le_left _ _)
+  have hmf : (twinLo n).minFac ≤ twinLo n :=
+    Nat.minFac_le (by have ha : twinLo n = 6 * n - 1 := rfl; omega)
+  have hsc : score n ≤ (twinLo n).minFac := min_le_left _ _
+  omega
+
+/-- `(6n-1)^2 > 6n+1` for every `n ≥ 1`. Substituting `n = k+1` removes the truncated
+    subtraction so that `nlinarith` can see the quadratic. -/
+theorem lo_sq_gt_hi (n : ℕ) (hn : 1 ≤ n) : 6 * n + 1 < (6 * n - 1) * (6 * n - 1) := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  have h : 6 * (k + 1) - 1 = 6 * k + 5 := by omega
+  rw [h]; nlinarith
+
+/-- If the score falls short of the lower member, the score squared already exceeds the
+    upper member: the shortfall means a member is composite at its least prime factor. -/
+theorem score_sq_le_hi_of_gt {n : ℕ} (hn : 1 ≤ n) (hb : score n < twinLo n) :
+    score n * score n ≤ twinHi n := by
+  have hlo2 : 2 ≤ twinLo n := by have ha : twinLo n = 6 * n - 1 := rfl; omega
+  have hhi2 : 2 ≤ twinHi n := by have ha : twinHi n = 6 * n + 1 := rfl; omega
+  have horder : twinLo n < twinHi n := by
+    have a : twinLo n = 6 * n - 1 := rfl
+    have b : twinHi n = 6 * n + 1 := rfl
+    omega
+  -- the score is a least prime factor of one member, and lies below that member
+  have hdiv : score n * score n ≤ twinLo n ∨ score n * score n ≤ twinHi n := by
+    rcases le_total (twinLo n).minFac (twinHi n).minFac with hle | hle
+    · left
+      have hs : score n = (twinLo n).minFac := by
+        have h : score n = min (twinLo n).minFac (twinHi n).minFac := rfl
+        rw [h]; exact Nat.min_eq_left hle
+      have hlt : (twinLo n).minFac < twinLo n := hs ▸ hb
+      have hsq : (twinLo n).minFac * (twinLo n).minFac ≤ twinLo n := minFac_sq_le hlo2 hlt
+      rw [hs]; exact hsq
+    · right
+      have hs : score n = (twinHi n).minFac := by
+        have h : score n = min (twinLo n).minFac (twinHi n).minFac := rfl
+        rw [h]; exact Nat.min_eq_right hle
+      have hlt : (twinHi n).minFac < twinHi n := by omega
+      have hsq : (twinHi n).minFac * (twinHi n).minFac ≤ twinHi n := minFac_sq_le hhi2 hlt
+      rw [hs]; exact hsq
+  rcases hdiv with h | h
+  · omega
+  · exact h
+
+/-- **The square test.** `twinHi n < score n ^ 2` is equivalent to the score reaching the
+    lower member — the two forms the record scan uses are the same condition. -/
+theorem sq_test_iff {n : ℕ} (hn : 1 ≤ n) :
+    twinHi n < score n * score n ↔ twinLo n ≤ score n := by
+  constructor
+  · intro h
+    by_contra hcon
+    push Not at hcon
+    have h1 := score_sq_le_hi_of_gt hn hcon
+    omega
+  · intro h
+    have hle : twinLo n ≤ (twinLo n).minFac := h.trans (min_le_left _ _)
+    have hmf : (twinLo n).minFac ≤ twinLo n :=
+      Nat.minFac_le (by have ha : twinLo n = 6 * n - 1 := rfl; omega)
+    have hsc : score n ≤ (twinLo n).minFac := min_le_left _ _
+    have hb : score n = twinLo n := by omega
+    have ha : twinLo n = 6 * n - 1 := rfl
+    have hc : twinHi n = 6 * n + 1 := rfl
+    rw [hb, ha, hc]
+    exact lo_sq_gt_hi n hn
+
+/-- **One inequality decides the twin question.** For every `n ≥ 1`, both members are
+    prime exactly when `6n+1 < score n ^ 2`. -/
+theorem twin_iff_sq_test {n : ℕ} (hn : 1 ≤ n) :
+    (Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n)) ↔ twinHi n < score n * score n := by
+  constructor
+  · intro h
+    have hL : (twinLo n).minFac = twinLo n := minFac_eq_self_of_prime h.1
+    have hH : (twinHi n).minFac = twinHi n := minFac_eq_self_of_prime h.2
+    have hsc : score n = twinLo n := by
+      have h' : score n = min (twinLo n).minFac (twinHi n).minFac := rfl
+      rw [h', hL, hH]
+      exact Nat.min_eq_left (by
+        have a : twinLo n = 6 * n - 1 := rfl
+        have b : twinHi n = 6 * n + 1 := rfl; omega)
+    exact (sq_test_iff hn).mpr (le_of_eq hsc.symm)
+  · intro h
+    exact twin_of_score_row hn ((sq_test_iff hn).mp h)
+
 /-! ## The residual, and its exact strength -/
 
 /-- **The CPNF residual, stated on head values.** Cofinally often, the killer *is* one of
