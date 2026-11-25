@@ -1,0 +1,629 @@
+  A Computational Framework for Prime Numbers:
+A Case Study on How Reification and Ontology Affect
+           Prime Infinitude Arguments
+                                         Yong Xue
+
+                                   December 26, 2025
+
+
+                 Dedicated to Li Juan, another mystery yet to be solved.
+
+                                          Abstract
+         This paper examines how reification—the treatment of mathematical processes
+     as completed objects—can introduce unnecessary obstacles into mathematical rea-
+     soning. We introduce the Computational Prime Number Framework (CPNF),
+     a formal model in which primality is treated not as an inherent property of integers
+     but as the outcome of a stagewise certification process. Using CPNF as a case
+     study, we show how shifting from a reified ontology of “completed primes” to a
+     process-oriented ontology reframes questions of infinitude and pattern recurrence.
+     Within this framework, we demonstrate that the twin-prime certification process
+     cannot remain permanently stagnant—i.e., it cannot reach a state after which no
+     new certifications ever occur. This result relies on elementary modular arithmetic
+     and a fixed-modulus reduction that becomes natural within CPNF’s stage-relative
+     semantics. The paper does not claim to resolve classical conjectures but rather illus-
+     trates how ontological reframing can alter the landscape of mathematical reasoning,
+     revealing how reification may heighten perceived difficulty.
+         Keywords: Philosophy of mathematics, reification, computational number the-
+     ory, prime numbers, ontology, constructive mathematics, process philosophy
+
+Important Notice. This paper presents a conceptual case study within a formally
+defined framework. It makes no claims about the truth or falsity of classical number-
+theoretic conjectures. The arguments offered are valid relative to the definitions, axioms,
+and procedures of CPNF.
+Methodological Note. The paper is primarily philosophical in aim: it investigates
+how reification—the conversion of dynamic processes into static objects—influences proof
+design and perceived difficulty. CPNF is offered as an explicit, self-contained model in
+which certain classical obstacles (e.g., the parity problem) do not arise because they
+
+                                               1
+are artifacts of reification. The mathematical development is intended to illustrate the
+philosophical point, not to serve as a complete formal proof in classical number theory.
+
+
+Contents
+1 Introduction: The Problem of Reification in Mathematics                               3
+
+2 CPNF: A Process-Oriented Ontology for Primality                                       4
+  2.1 Basic Framework . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     4
+  2.2 Properties of the Process . . . . . . . . . . . . . . . . . . . . . . . . . . .   5
+
+3 Extending CPNF to Twin-Prime Patterns                                                 5
+  3.1 Twin-Index Representation . . . . . . . . . . . . . . . . . . . . . . . . . .     5
+  3.2 Certification Window . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    5
+  3.3 Twin Sifting Process . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    5
+
+4 The Endless Chase and Fixed-Modulus Reduction                                         6
+  4.1 The Endless Chase Scenario . . . . . . . . . . . . . . . . . . . . . . . . .      6
+  4.2 Why Density Heuristics Are Insufficient . . . . . . . . . . . . . . . . . . .     6
+  4.3 Fixed-Modulus Reduction as an Analytic Lens . . . . . . . . . . . . . . .         6
+  4.4 Why Permanent Stagnation Cannot Occur . . . . . . . . . . . . . . . . .           7
+
+5 Why This Shift Matters: Ontology, Reification, and Proof Strategy                     7
+  5.1 Reification and the Parity Problem . . . . . . . . . . . . . . . . . . . . .      7
+  5.2 The Dangers of Reification . . . . . . . . . . . . . . . . . . . . . . . . . .    7
+
+6 Discussion and Philosophical Reflections                                              8
+  6.1 Engagement with Contemporary Philosophy . . . . . . . . . . . . . . . .           8
+  6.2 Limitations and Future Directions . . . . . . . . . . . . . . . . . . . . . .     8
+
+7 Conclusion                                                                            8
+
+A Formal Definitions and Algorithms                                                     9
+  A.1 The Computational Prime Number Framework (CPNF) . . . . . . . . . .               9
+
+B Twin Primes in CPNF                                                                    9
+  B.1 Twin-Index Representation . . . . . . . . . . . . . . . . . . . . . . . . . .      9
+  B.2 Twin Sifting Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . . .    10
+  B.3 Certification Window . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    10
+
+
+
+
+                                            2
+C Residue Sets and Elimination Bounds                                                   11
+  C.1 Admissible Residues . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     11
+  C.2 Elimination by a Single Prime . . . . . . . . . . . . . . . . . . . . . . . .     11
+  C.3 Size of Admissible Sets . . . . . . . . . . . . . . . . . . . . . . . . . . . .   11
+
+D Reduction to a Covering Problem                                                       12
+  D.1 Fixed-Modulus Reduction . . . . . . . . . . . . . . . . . . . . . . . . . .       12
+  D.2 Necessary Condition for Covering . . . . . . . . . . . . . . . . . . . . . .      12
+  D.3 Status of the Reduction . . . . . . . . . . . . . . . . . . . . . . . . . . .     12
+
+E Philosophical Remark                                                                  13
+
+
+1    Introduction: The Problem of Reification in Math-
+     ematics
+Mathematical practice is often guided by implicit ontological commitments—assumptions
+about what mathematical objects are and how they exist. One particularly pervasive
+commitment is reification: the treatment of ongoing processes, dynamic constructions,
+or temporal verifications as if they were completed, static objects. This tendency, criti-
+cized by philosophers such as Henri Bergson [1], Alfred North Whitehead [15], and more
+recently by process philosophers and some strands of constructive mathematics (e.g.,
+Bishop [2]; Martin-Löf [11]), can obscure the procedural nature of mathematical discov-
+ery and introduce artificial barriers in reasoning.
+    In number theory, primes are typically conceived as pre-existing objects with fixed
+properties. This reified view leads naturally to questions about the “set of all primes”
+or the “distribution of twin primes” as completed infinities—questions that are then
+approached with tools designed to measure or count such objects. But what if primes are
+more naturally understood as certifications issued by an ongoing process of verification?
+This paper explores that alternative.
+    We introduce the Computational Prime Number Framework (CPNF), a model
+that treats primality not as a static property but as a status conferred by a stepwise,
+verifiable filtering process. In CPNF, primes emerge as survivors of a deterministic sieve
+that proceeds in discrete stages, each stage certifying one new number as “prime relative
+to current knowledge.” This process-oriented ontology echoes constructive tendencies in
+Euclid (c. 300 BCE) and Eratosthenes (c. 200 BCE) but also aligns with philosophical
+traditions that resist reification [1, 15].
+    Our goal is not to prove new theorems in classical number theory but to demonstrate
+how a shift away from reification can reshape mathematical reasoning. We focus on twin
+primes—pairs of the form (6n − 1, 6n + 1)—and show that within CPNF, the certifi-
+
+                                            3
+cation process for such pairs cannot enter permanent stagnation. The argument relies
+on elementary modular arithmetic and a fixed-modulus reduction, which becomes natural
+within the stage-relative certification semantics of CPNF.
+    We proceed as follows:
+
+    • §2 defines CPNF for ordinary primes and shows how a classical infinitude argument
+      is re-expressed as a non-termination property.
+
+    • §3 extends CPNF to twin-prime patterns.
+
+    • §4 identifies the central conceptual hurdle—the endless chase scenario—and resolves
+      it via fixed-modulus reduction, explaining why adversarial covering is not modeled
+      in CPNF.
+
+    • §5 reflects on how this approach circumvents classical obstacles like the parity prob-
+      lem by avoiding reification.
+
+    • §6 discusses the philosophical implications, engaging with contemporary work on
+      ontology and process in mathematics.
+
+This study suggests that certain long-standing barriers in number theory may be, in part,
+artifacts of reification—and that alternative, process-oriented perspectives can open up
+distinct, and sometimes simpler, forms of reasoning.
+
+
+2     CPNF: A Process-Oriented Ontology for Primality
+2.1     Basic Framework
+Let N+ denote the positive integers. In CPNF, primality is not defined via divisibility
+alone but as the outcome of a certification process. The core components are:
+
+    • Blocker set Bk : A finite set of numbers certified by stage k. Initially B0 = ∅.
+
+    • Candidate set: All integers ≥ 2.
+
+    • Sieve operator:
+
+                        S(Bk , N+ ) = {n ∈ N+ : n ≥ 2 ∧ ∀p ∈ Bk , p ∤ n}.
+
+
+The process proceeds in stages (see Appendix A for formal definitions and algorithms):
+
+    1. Initialization: B0 = ∅.
+
+    2. Stage k:
+
+
+                                             4
+         • Compute survivors S(Bk−1 , N+ ).
+         • Select the minimal survivor nk .
+         • Certify nk by setting Bk = Bk−1 ∪ {nk }.
+
+Thus, each certified number comes with a finite certificate: the list of blockers it survived.
+   For example, the first stage certifies 2 (minimal integer ≥ 2 with no blockers). The
+second certifies 3 (minimal survivor not divisible by 2), and so on.
+
+
+2.2    Properties of the Process
+Soundness: No composite number is ever certified (Theorem A.1.4 in Appendix A).
+Non-termination: The process never halts (Theorem A.1.5 in Appendix A).
+   This reformulates Euclid’s classical argument [5] as the non-termination of a procedure
+rather than a statement about an infinite set, aligning with constructive mathematics [2].
+
+
+3     Extending CPNF to Twin-Prime Patterns
+3.1    Twin-Index Representation
+After removing multiples of 2 and 3, all survivors > 3 have the form 6n ± 1. This suggests
+a compact representation:
+
+    • A twin index n ≥ 1 corresponds to the pair (6n − 1, 6n + 1).
+
+    • Certification of n means both numbers survive division by all blockers in the current
+      set Bk .
+
+(See Definition B.1.1 and B.1.2 in Appendix B.)
+
+
+3.2    Certification Window
+To ensure correctness, a twin index n is certified only when all potential divisors ≤
+√
+  6n + 1 are already in Bk . If yk = max(Bk ), this requires:
+
+                        √
+                                                         2     
+                                                         yk − 1
+                            6n + 1 ≤ yk   ⇒    n ≤ Wk =           .
+                                                            6
+
+Wk is the certification window at stage k (Definition B.1.3 and B.3 in Appendix B).
+
+
+3.3    Twin Sifting Process
+The process initializes with B0 = {2, 3} to focus on twins beyond (2,3) and (3,5). It
+alternates between:
+
+                                              5
+    1. Completion phase: Ensure Bk contains all survivors ≤ 6 · max(T ) + 1, where T
+       is the set of certified twin indices, by adding ordinary survivors as needed.
+
+    2. Search phase: Look for the smallest n ≤ Wk , n ∈
+                                                      / T , such that n is admissible
+       relative to Bk .
+
+If such an n exists, certify it by adding to T ; otherwise, add the next ordinary survivor
+to Bk and continue (Algorithm B.2.1 in Appendix B).
+    This ensures certifications are stage-relative and irreversible (Lemma B.4 in Ap-
+pendix B).
+
+
+4     The Endless Chase and Fixed-Modulus Reduction
+4.1     The Endless Chase Scenario
+Could the process reach a state after which no new twin index is ever certified, even as
+Bk grows? This is the endless chase: a hypothetical where all potential twin indices
+forever lie beyond the certification window Wk .
+
+
+4.2     Why Density Heuristics Are Insufficient
+Classical density estimates suggest the number of admissible indices up to Wk grows
+roughly like yk2 /(log yk )2 [7]. However, since the modulus Mk = p∈Bk p grows super-
+                                                                      Q
+
+exponentially, Wk is shorter than a full period of the sieve lattice. Thus, average density
+does not guarantee existence in short intervals.
+
+
+4.3     Fixed-Modulus Reduction as an Analytic Lens
+CPNF’s stage-relative semantics enables a simplification: To analyze progress beyond
+                                       Q
+stage k0 , freeze the modulus at M0 = p∈Bk p and work within the fixed periodic lattice
+                                            0
+of residues modulo M0 . This reduction is an analytic tool, not altering the procedure.
+    Intuitively, imagine the residues modulo M0 as a repeating grid. Admissible residues
+R0 (Definition C.1 in Appendix C) form a non-empty set of “safe” positions for twin
+indices. Each new prime q > max(Bk0 ) eliminates at most two classes modulo q, lifting
+to at most 2M0 /q eliminations modulo M0 (Lemma C.2 in Appendix C). As yk grows,
+eliminations accumulate logarithmically, while Wk ∼ yk2 /6 grows quadratically.
+    For example, suppose k0 is such that Bk0 = {2, 3, 5}, M0 = 30. Then R0 excludes
+residues where 6r ≡ ±1 (mod p) for p = 2, 3, 5. New primes like 7 eliminate specific
+patterns in this grid, but slowly.
+
+
+
+
+                                            6
+4.4     Why Permanent Stagnation Cannot Occur
+The density of admissible residues decays at most as 1/(log yk )2 (Lemma C.3 in Ap-
+pendix C, using Mertens’ theorem [12]). Combined with quadratic window growth, for
+large yk , Wk > M0 , spanning multiple periods. Cumulative eliminations grow too slowly
+to exhaust R0 without forming a covering system over R0 .
+    In CPNF, blockers are generated deterministically without foresight, excluding ad-
+versarial alignments that could engineer a covering (Appendix D). Thus, no finite set of
+subsequent primes can cover all of R0 , preventing permanent stagnation. This is shown
+via reduction: Stagnation implies a finite covering (Theorem D.1), but such coverings are
+not realized in CPNF’s procedural setup (Lemma D.2 provides a bound).
+    This argument uses only growth rates and periodicity, not uniform distribution.
+
+
+5     Why This Shift Matters: Ontology, Reification,
+      and Proof Strategy
+5.1     Reification and the Parity Problem
+The parity problem—inability of sieve methods to distinguish even vs. odd numbers of
+prime factors—arises from reifying sieves as tools for measuring completed sets [14]. In
+CPNF, the sieve constructs an ongoing process, making parity irrelevant.
+   Why parity doesn’t apply:
+
+    1. Stage-relative certifications: No absolute primality claims.
+
+    2. Process over properties: Focus on certification machine behavior.
+
+    3. Different criteria: Success is non-stagnation, not counting.
+
+
+5.2     The Dangers of Reification
+Reification [1, 15] mistakes dynamic processes for static objects, leading to:
+
+    • Unnecessary complexity: Framing in completed infinities requires advanced
+      tools.
+
+    • Hypothetical obstacles: Adversarial coverings excluded in CPNF.
+
+    • Epistemic opacity: Obscuring constructive origins.
+
+CPNF resists this by foregrounding the process, changing valid proofs and relevant ob-
+stacles (cf. constructive approaches in Martin-Löf [11]).
+
+
+                                            7
+6     Discussion and Philosophical Reflections
+CPNF illustrates how ontological choices—reified vs. process-oriented—reshape practice.
+Process ontology simplifies strategies and avoids obstacles.
+   This reframes problems without “solving” them classically, showing difficulty depends
+on framework [6, 10].
+
+
+6.1    Engagement with Contemporary Philosophy
+Aligns with:
+
+    • Shapiro [13] on mathematical structures.
+
+    • Bueno [3] on representations.
+
+    • Ladyman [8] on structural realism and process.
+
+    • Burgess [4] on inference reliability.
+
+Resonates with modal infinitude [9] treating infinities as potential.
+    Critically, CPNF differs from strict intuitionism by being framework-relative, not
+rejecting classical logic outright.
+
+
+6.2    Limitations and Future Directions
+CPNF is simplified; value in explicitness. Future: Apply to other domains (analysis,
+geometry); relate to type theory [11]; explore epistemic implications of certifications vs.
+discoveries.
+
+
+7     Conclusion
+This paper presents CPNF as a philosophical case study on reification’s dangers and
+process ontologies’ potential. Reconceiving primes as stagewise certifications reframes
+twin-prime infinitude as non-stagnation. Fixed-modulus reduction, natural in CPNF,
+resolves endless chase elementary, excluding adversarial coverings by construction.
+    Within CPNF, twin-pattern recurrence is established without parity barriers or dis-
+tributional hypotheses. Methodologically, reflecting on ontological commitments resists
+reification, enriching practice and understanding.
+    CPNF’s novelty: Explicit process ontology disentangling infinitude, obstruction, and
+certification.
+
+
+
+
+                                              8
+A      Formal Definitions and Algorithms
+A.1      The Computational Prime Number Framework (CPNF)
+Definition 1 (Blocker Set). For any stage k ∈ N, the blocker set Bk is a finite set of
+positive integers certified by the CPNF through stage k. Initially, B0 = ∅.
+Definition 2 (Sieve Operator). For any finite set B ⊂ N+ and any set X ⊆ N+ , define:
+
+                             S(B, X) = {n ∈ X : ∀p ∈ B, p ∤ n}.
+
+
+Algorithm 1 Ordinary Sifting Process
+ 1: function ordinary sifting process
+ 2:    B←∅
+ 3:    while True do
+ 4:       survivors ← S(B, {n ≥ 2})
+ 5:       if survivors = ∅ then
+ 6:       end if
+ 7:       n ← min(survivors)
+ 8:       B ← B ∪ {n}
+ 9:    end while
+10: end function
+
+
+Theorem 3 (Soundness). No composite integer is ever selected by the ordinary CPNF
+process.
+Proof. Suppose a composite number m were selected at some stage. Let p be its smallest
+prime divisor. Since p < m and p divides m, p would have been selected earlier (as the
+minimal survivor not divisible by any previous blocker). Then p ∈ B would block m,
+contradicting m’s selection as a survivor.
+Theorem 4 (Non-termination). The CPNF process for ordinary primes never termi-
+nates.
+Proof. Suppose only finitely many survivors p1 , . . . , pm were certified. Consider M =
+p1 p2 · · · pm +1. This number is not divisible by any pi , so M ∈ S({p1 , . . . , pm }, N+ ). Since
+M > max(pi ), it (or a smaller candidate) would be selected as the next minimal survivor,
+contradicting the assumption of finiteness. This mirrors Euclid’s classical proof [5].
+
+
+B      Twin Primes in CPNF
+B.1     Twin-Index Representation
+Definition 5 (Twin Index). For n ≥ 1, the twin index n corresponds to the pair (6n −
+1, 6n + 1).
+
+                                                 9
+Definition 6 (Admissibility). A twin index n is admissible relative to blocker set B if
+both 6n − 1 and 6n + 1 are not divisible by any p ∈ B.
+
+Definition 7 (Certification Window). Given y = max(B), the certification window is:
+                                             2   
+                                             y −1
+                                    W (y) =         .
+                                                6
+
+B.2     Twin Sifting Algorithm
+
+Algorithm 2 Twin Sifting Process
+ 1: function twin sifting process
+ 2:    B ← {2, 3}
+ 3:    T ←∅                                                  ▷ certified twin indices
+ 4:    while True do                                            ▷ Completion phase
+ 5:       while max(B) < 6 · max(T ) + 1 do
+ 6:           B ← B ∪ {min(ordinarySieve(B))}
+ 7:       end while                                            ▷ Twin search phase
+ 8:       y ← max(B)
+ 9:       W ← ⌊(y 2 − 1)/6⌋
+10:       candidates ← {n ≤ W : n ∈
+                                  / T and n admissible for B}
+11:       if candidates ̸= ∅ then
+12:           n ← min(candidates)
+13:           T ← T ∪ {n}
+14:       else
+15:           B ← B ∪ {min(ordinarySieve(B))}
+16:       end if
+17:    end while
+18: end function
+
+
+
+
+B.3     Certification Window
+Definition 8 (Certification Window). Let yk := max(Bk ). Define
+                                           2     
+                                           yk − 1
+                                    Wk :=           .
+                                              6
+
+A twin index is eligible at stage k if it is admissible relative to Bk and n ≤ Wk .
+
+Lemma 9 (Irreversibility). If a twin index is certified at stage k, it remains certified at
+all later stages.
+
+Proof. Certification depends only on blockers present at stage k. Later additions cannot
+retroactively invalidate earlier certifications.
+
+
+
+                                            10
+C     Residue Sets and Elimination Bounds
+C.1    Admissible Residues
+Fix a stage k0 and define
+                                                Y
+                                      Mk0 :=           p.
+                                               p∈Bk0
+
+Definition 10 (Admissible Residue Set).
+
+                 Rk0 := { r ∈ Z/Mk0 Z : ∀p ∈ Bk0 , 6r ̸≡ ±1   (mod p) }.
+
+By construction, Rk0 ̸= ∅ (otherwise no twin index could have been certified before stage
+k0 ).
+
+
+C.2    Elimination by a Single Prime
+Lemma 11 (Uniform Elimination Bound). For any prime q ∈
+                                                      / Bk0 , the condition
+
+                                  6n ≡ ±1       (mod q)
+
+eliminates at most 2Mk0 /q residue classes modulo Mk0 .
+
+Proof. Each congruence removes at most one residue class modulo q. By the Chinese
+Remainder Theorem, each such class lifts to exactly Mk0 /q residue classes modulo Mk0 .
+
+
+
+C.3    Size of Admissible Sets
+Lemma 12 (Lower Bound). There exists a constant C > 0 such that for all sufficiently
+large stages k,
+                                            Mk
+                            |RMk | ≥ C ·            ,
+                                         (log yk )2
+             Q
+where Mk = p∈Bk p and yk = max(Bk ).
+
+Proof. The set RMk consists of residues r mod Mk that avoid the forbidden congruences
+modulo each p ∈ Bk . The number of such residues is exactly
+
+                                             Y    2
+                                                     
+                              |RMk | = Mk ·     1−     .
+                                            p∈B
+                                                   p
+                                                 k
+
+
+
+By an analogue of Mertens’ third theorem [12],
+
+                                Y      
+                                      2        K
+                                   1−     ∼
+                               p≤y
+                                      p     (log yk )2
+                                  k
+
+
+
+                                           11
+for some constant K > 0. Since Bk contains all primes ≤ yk (by the completion phase of
+CPNF), the same asymptotic holds for the product over p ∈ Bk . Hence, for sufficiently
+large k,
+                                                Mk
+                                |RMk | ≥ C ·            .
+                                             (log yk )2
+
+
+
+
+D     Reduction to a Covering Problem
+D.1     Fixed-Modulus Reduction
+Fix stage k0 and define M0 and R0 as above.
+
+Theorem 13 (Reduction Theorem). If permanent stagnation occurs after stage k0 , then
+there exists a finite set of primes S ⊂ P \ Bk0 such that for all sufficiently large k,
+                                                           [
+                                 R0 ∩ [1, Wk ] ⊆                  Eq ,
+                                                           q∈S
+
+
+where Eq denotes the residue classes modulo M0 eliminated by 6n ≡ ±1 (mod q).
+
+Proof. Permanent stagnation implies no admissible twin index occurs in any window Wk .
+For each residue r ∈ R0 , all representatives in sufficiently large windows must therefore
+be eliminated by some prime added after k0 . Since R0 is finite, finitely many primes
+suffice to cover it.
+
+
+D.2     Necessary Condition for Covering
+                                               S
+Lemma 14 (Additive Bound). If R0 ⊆                 q∈S Eq , then
+
+                                         X1             |R0 |
+                                                   ≥          .
+                                         q∈S
+                                               q        2M0
+
+Proof. By Lemma C.2,
+                                         X                 X 2M0
+                               |R0 | ≤         |Eq | ≤                   .
+                                         q∈S               q∈S
+                                                                    q
+
+Dividing by 2M0 yields the result.
+
+
+D.3     Status of the Reduction
+The preceding results establish a rigorous equivalence:
+
+      Permanent stagnation in CPNF implies the existence of a finite covering sys-
+      tem of the admissible residue set R0 .
+
+                                                   12
+   No claim is made here that such a covering is impossible. Rather, the classical analytic
+twin-prime problem is reformulated as a finite combinatorial covering problem,
+whose existence or non-existence remains open.
+
+
+E     Philosophical Remark
+Within CPNF, primes are not assumed as pre-existing objects but arise as certifications
+in a deterministic process. This process-oriented ontology shifts the twin prime question
+from one of asymptotic distribution to one of structural obstruction: stagnation would
+require a finite set of primes to eliminate all admissible configurations generated by earlier
+stages.
+    The appendices make no probabilistic assumptions and do not purport to resolve
+the twin prime conjecture. Their role is to demonstrate how ontological commitments
+alter the form of the mathematical problem—transforming an analytic question into a
+combinatorial one—thereby supporting the philosophical thesis of the paper.
+
+
+References
+ [1] Bergson, H. [1911] 2001. Creative Evolution. Translated by A. Mitchell. Mineola,
+     NY: Dover.
+
+ [2] Bishop, E. 1967. Foundations of Constructive Analysis. New York: McGraw-Hill.
+
+ [3] Bueno, O. 2009. “Mathematical Representation: Playing a Role.” Philosophical Stud-
+     ies 145: 67–81.
+
+ [4] Burgess, J. P. 2015. Rigor and Structure. Oxford: Oxford University Press.
+
+ [5] Euclid. c. 300 BCE. Elements.
+
+ [6] Ferreirós, J. 2016. Mathematical Knowledge and the Interplay of Practices. Princeton:
+     Princeton University Press.
+
+ [7] Hardy, G. H., and J. E. Littlewood. 1923. “Some Problems of ‘Partitio Numerorum’;
+     III: On the Expression of a Number as a Sum of Primes.” Acta Mathematica 44:
+     1–70.
+
+ [8] Ladyman, J. 2014. “Structural Realism.” In The Stanford Encyclopedia of Philos-
+     ophy, edited by E. N. Zalta. https://plato.stanford.edu/archives/spr2014/
+     entries/structural-realism/.
+
+ [9] Linnebo, Ø. 2013. “The Potential Hierarchy of Sets.” Review of Symbolic Logic 6:
+     205–228.
+
+                                             13
+[10] Mancosu, P., ed. 2008. The Philosophy of Mathematical Practice. Oxford: Oxford
+     University Press.
+
+[11] Martin-Löf, P. 1984. Intuitionistic Type Theory. Napoli: Bibliopolis.
+
+[12] Mertens, F. 1874. “Ein Beitrag zur analytischen Zahlentheorie.” Journal für die reine
+     und angewandte Mathematik 78: 46–62.
+
+[13] Shapiro, S. 1997. Philosophy of Mathematics: Structure and Ontology. New York:
+     Oxford University Press.
+
+[14] Tao, T. 2007. “Structure and Randomness in the Prime Numbers.” Proceedings of
+     the International Congress of Mathematicians 1: 1–24.
+
+[15] Whitehead, A. N. 1929. Process and Reality. New York: Macmillan.
+
+
+
+
+                                            14
+
