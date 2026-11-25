@@ -394,8 +394,9 @@ theorem lo_sq_gt_hi (n : ℕ) (hn : 1 ≤ n) : 6 * n + 1 < (6 * n - 1) * (6 * n 
   have h : 6 * (k + 1) - 1 = 6 * k + 5 := by omega
   rw [h]; nlinarith
 
-/-- If the score falls short of the lower member, the score squared already exceeds the
-    upper member: the shortfall means a member is composite at its least prime factor. -/
+/-- If the score falls short of the lower member, the score squared is at most the
+    upper member: the shortfall means a member is composite at its least prime factor,
+    which puts `score^2` below the member it strikes. -/
 theorem score_sq_le_hi_of_gt {n : ℕ} (hn : 1 ≤ n) (hb : score n < twinLo n) :
     score n * score n ≤ twinHi n := by
   have hlo2 : 2 ≤ twinLo n := by have ha : twinLo n = 6 * n - 1 := rfl; omega
@@ -510,6 +511,47 @@ theorem no_passing_record_iff_no_twin (N : ℕ) :
   · intro htwins n hn hnN hrec hpass
     -- a passing record is a twin, contradicting the absence of twins
     exact htwins n hn hnN ((twin_iff_sq_test hn).mpr hpass)
+
+/-! ## Finalised: pointwise scan, score-attainment, and the head crossing -/
+
+/-- **A passing record is exactly a twin index.** Soundness uses only the square test;
+    completeness uses that a twin index is always a record. -/
+theorem passing_record_iff_twin {n : ℕ} (hn : 1 ≤ n) :
+    (IsRecord n ∧ twinHi n < score n * score n) ↔
+    (Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n)) := by
+  constructor
+  · intro h
+    exact (twin_iff_sq_test hn).mpr h.2
+  · intro h
+    exact ⟨isRecord_of_twin hn h.1 h.2, (twin_iff_sq_test hn).mp h⟩
+
+/-- **A positive row is twin exactly when its score attains its upper bound.** This lets
+    an executable scan test equality `score n = twinLo n` instead of squaring. -/
+theorem twin_iff_score_eq_lo {n : ℕ} (hn : 1 ≤ n) :
+    (Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n)) ↔ score n = twinLo n := by
+  rw [twin_iff_sq_test hn, sq_test_iff hn]
+  exact ⟨score_eq_lo_of_row hn, fun h => h.ge⟩
+
+/-- **The head is a first crossing of the score.** `head k = n` exactly when the killer
+    reaches the score at `n` and no earlier score does: the left endpoint of the interval
+    is open, the right closed — a tie is owned by the earlier index. -/
+theorem head_eq_iff_first_crossing {k n : ℕ} (hn : 1 ≤ n) :
+    head k = n ↔
+      certify k ≤ score n ∧
+      ∀ m, 1 ≤ m → m < n → score m < certify k := by
+  constructor
+  · intro he
+    subst n
+    refine ⟨(admissible_iff_score hn).mp (head_admissible k), ?_⟩
+    intro m hm hlt
+    by_contra! h
+    exact (not_le_of_gt hlt) (head_le hm ((admissible_iff_score hm).mpr h))
+  · rintro ⟨hc, hearlier⟩
+    apply le_antisymm (head_le hn ((admissible_iff_score hn).mpr hc))
+    by_contra! h
+    exact (not_lt_of_ge
+      ((admissible_iff_score (one_le_head k)).mp (head_admissible k)))
+      (hearlier (head k) (one_le_head k) h)
 
 /-! ## The residual, and its exact strength -/
 
