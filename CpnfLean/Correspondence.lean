@@ -687,4 +687,91 @@ theorem twins_of_scoreMass (H : CofinalScoreMass) :
   obtain ⟨n, hKn, hn1, hsc⟩ := passing_beyond_of_scoreMass H K
   exact ⟨n, hKn, (twin_iff_score_eq_lo hn1).mpr hsc⟩
 
+/-! ## The second moment: one twin suffices -/
+
+/-- **Energy test.** In a block `[N, 2N]`, the sum of squared scores beating the sum of
+    upper members is equivalent to the block containing a passing row. One twin is enough:
+    its squared score `(6N-1)^2` alone exceeds the entire upper-member budget. -/
+theorem energy_block_iff {N : ℕ} (hN : 2 ≤ N) :
+    (∑ n ∈ Finset.Icc N (2*N), twinHi n) <
+        (∑ n ∈ Finset.Icc N (2*N), score n * score n) ↔
+      ∃ n ∈ Finset.Icc N (2*N), score n = twinLo n := by
+  constructor
+  · -- no passing row: every squared score sits under its upper member
+    intro he
+    by_contra h
+    apply (not_lt_of_ge ?_) he
+    apply Finset.sum_le_sum
+    intro n hn
+    have hlo := (Finset.mem_Icc.mp hn).1
+    have hn1 : 1 ≤ n := by omega
+    have hf : score n ≠ twinLo n := fun hp => h ⟨n, hn, hp⟩
+    exact score_sq_le_hi_of_gt hn1 (lt_of_le_of_ne (score_le_lo n hn1) hf)
+  · -- one passing row outweighs the whole block budget
+    rintro ⟨n, hn, hp⟩
+    have hb := Finset.mem_Icc.mp hn
+    have hc : (Finset.Icc N (2*N)).card = N+1 := by
+      rw [Nat.card_Icc]
+      omega
+    have budget :
+        (∑ m ∈ Finset.Icc N (2*N), twinHi m) ≤ (N+1)*(12*N+1) := by
+      calc
+        _ ≤ ∑ m ∈ Finset.Icc N (2*N), (12*N+1) := by
+          apply Finset.sum_le_sum
+          intro m hm
+          have hu := (Finset.mem_Icc.mp hm).2
+          unfold twinHi
+          omega
+        _ = _ := by simp [hc, Nat.nsmul_eq_mul]
+    have single :
+        score n * score n ≤ ∑ m ∈ Finset.Icc N (2*N), score m * score m :=
+      Finset.single_le_sum (fun i _ => Nat.zero_le (score i * score i)) hn
+    have hlow : 6*N-1 ≤ score n := by
+      rw [hp, twinLo]
+      omega
+    have gap : (N+1)*(12*N+1) < (6*N-1)*(6*N-1) := by
+      obtain ⟨k, rfl⟩ : ∃ k, N = k+2 := ⟨N-2, by omega⟩
+      rw [show 6*(k+2)-1 = 6*k+11 by omega]
+      nlinarith
+    exact lt_of_le_of_lt budget
+      (lt_of_lt_of_le gap ((Nat.mul_le_mul hlow hlow).trans single))
+
+/-- **The energy hypothesis.** Cofinally many blocks `[N, 2N]` carry more squared-score
+    mass than upper-member mass. -/
+def CofinalScoreEnergy : Prop :=
+  ∀ K : ℕ, ∃ N : ℕ, K ≤ N ∧ 2 ≤ N ∧
+    (∑ n ∈ Finset.Icc N (2*N), twinHi n) <
+      (∑ n ∈ Finset.Icc N (2*N), score n * score n)
+
+/-- **The energy hypothesis is exactly cofinal passing rows** — no clusters needed. -/
+theorem energy_iff_cofinal_pass :
+    CofinalScoreEnergy ↔ ∀ K : ℕ, ∃ n, K ≤ n ∧ score n = twinLo n := by
+  constructor
+  · intro H K
+    obtain ⟨N, hKN, hN, he⟩ := H K
+    obtain ⟨n, hn, hp⟩ := (energy_block_iff hN).mp he
+    exact ⟨n, hKN.trans (Finset.mem_Icc.mp hn).1, hp⟩
+  · intro H K
+    obtain ⟨n, hn, hp⟩ := H (K+2)
+    refine ⟨n, by omega, by omega, (energy_block_iff (by omega : 2 ≤ n)).mpr ?_⟩
+    exact ⟨n, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩, hp⟩
+
+/-- **Energy suffices.** -/
+theorem twins_of_scoreEnergy (H : CofinalScoreEnergy) :
+    ∀ K : ℕ, ∃ n, K ≤ n ∧ Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n) := by
+  intro K
+  obtain ⟨n, hn, hp⟩ := energy_iff_cofinal_pass.mp H (K+1)
+  exact ⟨n, by omega, (twin_iff_score_eq_lo (by omega)).mpr hp⟩
+
+/-- The first-moment hypothesis gives cofinal passing rows. -/
+theorem cofinal_pass_of_mass (H : CofinalScoreMass) :
+    ∀ K : ℕ, ∃ n, K ≤ n ∧ score n = twinLo n := by
+  intro K
+  obtain ⟨n, hn, _, hp⟩ := passing_beyond_of_scoreMass H K
+  exact ⟨n, hn, hp⟩
+
+/-- The first moment implies the second: the earlier hypothesis is stronger than needed. -/
+theorem energy_of_mass (H : CofinalScoreMass) : CofinalScoreEnergy :=
+  energy_iff_cofinal_pass.mpr (cofinal_pass_of_mass H)
+
 end CPNF
