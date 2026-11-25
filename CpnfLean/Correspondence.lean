@@ -264,6 +264,65 @@ theorem stage_eq_primes_lt (k : ℕ) : stage k = (Finset.range (certify k)).filt
     have := next_le k q hmem
     omega
 
+/-! ## The score: one record computation instead of two scans -/
+
+/-- The **score** of a twin index: the smaller of the least prime factors of the two
+    members. Read it as "how much sieving this pair can take": the pair is admissible at
+    stage `k` exactly when its score reaches the killer `certify k`. -/
+def score (n : ℕ) : ℕ := min (twinLo n).minFac (twinHi n).minFac
+
+/-- Surviving stage `k` pushes the score up to the killer: the least prime factor of a
+    survivor is not a blocker, and the blockers are exactly the primes below `certify k`. -/
+theorem minFac_le_cert_of_survives {k m : ℕ} (hm : 2 ≤ m) (hs : Survives (stage k) m) :
+    certify k ≤ m.minFac := by
+  by_contra hcon
+  -- Otherwise the least prime factor is a prime below the killer, hence a blocker.
+  push Not at hcon
+  have hprime : Nat.Prime m.minFac := Nat.minFac_prime (by omega)
+  have hmem : m.minFac ∈ stage k := by
+    rw [stage_eq_primes_lt, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hcon, hprime⟩
+  exact hs m.minFac hmem (Nat.minFac_dvd m)
+
+/-- Conversely, a member whose least prime factor is at least the killer survives. -/
+theorem survives_of_cert_le_minFac {k m : ℕ} (h : certify k ≤ m.minFac) :
+    Survives (stage k) m := by
+  intro p hp hpd
+  rw [stage_eq_primes_lt, Finset.mem_filter, Finset.mem_range] at hp
+  obtain ⟨hlt, hprime⟩ := hp
+  -- any prime dividing `m` is at least its least prime factor
+  have := Nat.minFac_le_of_dvd hprime.two_le hpd
+  omega
+
+/-- **The bridge to the score.** A pair is admissible at stage `k` exactly when its score
+    reaches `certify k`. This replaces "test both members against every blocker" by one
+    arithmetic comparison. -/
+theorem admissible_iff_score {k n : ℕ} (hn : 1 ≤ n) :
+    Admissible (stage k) n ↔ certify k ≤ score n := by
+  have hlo : 2 ≤ twinLo n := by
+    have ha : twinLo n = 6 * n - 1 := rfl; omega
+  have hhi : 2 ≤ twinHi n := by
+    have ha : twinHi n = 6 * n + 1 := rfl; omega
+  constructor
+  · intro h
+    exact le_min (minFac_le_cert_of_survives hlo h.1) (minFac_le_cert_of_survives hhi h.2)
+  · intro h
+    exact ⟨survives_of_cert_le_minFac (le_trans h (min_le_left _ _)),
+           survives_of_cert_le_minFac (le_trans h (min_le_right _ _))⟩
+
+/-- **The head is a first crossing of the score.** This is the finite, computable form of
+    the head: no leastness scan over stages is needed, only the least `n ≤ N` whose score
+    reaches the killer. -/
+theorem head_le_iff (k N : ℕ) :
+    head k ≤ N ↔ ∃ n, 1 ≤ n ∧ n ≤ N ∧ certify k ≤ score n := by
+  constructor
+  · -- the head itself is such an `n`
+    intro h
+    exact ⟨head k, one_le_head k, h, (admissible_iff_score (one_le_head k)).mp (head_admissible k)⟩
+  · -- any such `n` bounds the least one
+    rintro ⟨n, hn, hnN, hsc⟩
+    exact le_trans (head_le hn ((admissible_iff_score hn).mpr hsc)) hnN
+
 /-! ## The residual, and its exact strength -/
 
 /-- **The CPNF residual, stated on head values.** Cofinally often, the killer *is* one of
