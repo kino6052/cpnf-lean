@@ -106,4 +106,34 @@ theorem stageWindow_ge {k y : ℕ} (h : maxBlocker k = y) (hy : 7 ≤ y) : y ≤
   simp only [stageWindow, h]
   exact window_ge y hy
 
+/-! ## The crossing step
+
+The reverse half of the bridge needs one prime-free fact: an admissible index whose lower
+member sits below `2y` is already inside the window. We keep it separate from the bridge so
+that the bridge only has to pick the stage and supply the gap bound. -/
+
+/-- **Crossing step.** If the largest blocker is `y ≥ 3` and the lower member `6n - 1` is
+    below `2y`, then an admissible index `n ≥ 1` already lies in the twin sieve of its own
+    stage. Unconditional: the window bound is pure arithmetic, so this needs no prime input
+    at all — exactly the part of the bridge that we *can* prove today. -/
+theorem twinSieve_of_lt_two_mul {k n y : ℕ} (hmax : maxBlocker k = y) (hn : 1 ≤ n)
+    (hy : 3 ≤ y) (hlt : twinLo n < 2 * y) (h : Admissible (stage k) n) :
+    n ∈ twinSieve (stage k) y := by
+  -- Membership in the sieve is admissibility plus the window bound.
+  rw [twinSieve, Set.mem_ofPred_eq]
+  refine ⟨h, ?_⟩
+  -- The window bound needs `6n + 1 ≤ y * y`, then peeling one off.
+  have hle : 6 * n + 1 ≤ y * y := by
+    -- `hlt` is `6n - 1 < 2y`, so `6n ≤ 2y`; then `6n + 1 ≤ 2y + 1 ≤ y * y` since `y ≥ 3`.
+    have h2 : 6 * n ≤ 2 * y := by
+      have hlo : twinLo n = 6 * n - 1 := rfl
+      omega
+    nlinarith [hy, h2]
+  -- Unfold the window to an explicit product so the division lemma applies.
+  have hwin : window y = (y * y - 1) / 6 := by
+    rw [window, pow_two]
+  rw [hwin, Nat.le_div_iff_mul_le (by norm_num : (0 : ℕ) < 6)]
+  -- Now `n * 6 ≤ y * y - 1`, which follows from `6n + 1 ≤ y * y`.
+  omega
+
 end CPNF
