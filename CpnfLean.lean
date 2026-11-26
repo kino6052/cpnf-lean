@@ -26,4 +26,6 @@ import CpnfLean.Overload
 import CpnfLean.Wheel
 import CpnfLean.Obstruction
 import CpnfLean.ObstructionStructure
+import CpnfLean.Sieve
+import CpnfLean.SieveCount
 import CpnfLean.Ladder
