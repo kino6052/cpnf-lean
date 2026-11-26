@@ -131,4 +131,75 @@ theorem head_le_of_factor {k t q : ℕ} (hlo : twinLo (head k) ≤ score (head k
   unfold twinLo at h2
   omega
 
+
+/-! ## The window characterisation: the exact interval-hitting instance needed -/
+
+/-- `n` lies inside the certification window at `h` exactly when `6n + 1 ≤ h²`. -/
+theorem le_window_iff {n h : ℕ} (hh : 1 ≤ h) : n ≤ window h ↔ 6 * n + 1 ≤ h * h := by
+  unfold window
+  rw [Nat.le_div_iff_mul_le (by norm_num : 0 < 6)]
+  have e : h ^ 2 = h * h := by ring
+  rw [e]
+  have c : n * 6 = 6 * n := by ring
+  rw [c]
+  have hpos : 1 ≤ h * h := Nat.one_le_iff_ne_zero.mpr (by positivity)
+  constructor <;> intro h1 <;> omega
+
+/-- **A score-witness inside the window is a twin pair.** This is the forward half of the
+    equivalence: the square test fires as soon as `score` clears `h` while the index is
+    still under `W(h)`. -/
+theorem twin_of_window_witness {n h : ℕ} (hn1 : 1 ≤ n) (hh : 1 ≤ h)
+    (hnw : n ≤ window h) (hsc : h < score n) :
+    Nat.Prime (twinLo n) ∧ Nat.Prime (twinHi n) := by
+  apply (twin_iff_sq_test hn1).mpr
+  unfold twinHi
+  have h1 : 6 * n + 1 ≤ h * h := (le_window_iff hh).mp hnw
+  have h2 : h * h < score n * score n := Nat.mul_lt_mul'' hsc hsc
+  omega
+
+/-- **Every twin pair sits inside the window at `h = 6n - 2`**, with score `6n - 1 > h`.
+    This is the reverse half: twins are exactly the window witnesses. -/
+theorem window_witness_of_twin {n : ℕ} (hn : 1 ≤ n) (hp : Nat.Prime (twinLo n))
+    (hq : Nat.Prime (twinHi n)) :
+    ∃ h, 1 ≤ h ∧ n ≤ window h ∧ h < score n := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  have hge : 1 ≤ 6 * (k + 1) - 2 := by omega
+  refine ⟨6 * (k + 1) - 2, hge, ?_, ?_⟩
+  · rw [le_window_iff hge]
+    have h : 6 * (k + 1) - 2 = 6 * k + 4 := by omega
+    rw [h]
+    have e : (6 * k + 4) * (6 * k + 4) = 36 * k * k + 48 * k + 16 := by ring
+    rw [e]; omega
+  · have hsc : score (k + 1) = twinLo (k + 1) :=
+      (twin_iff_score_eq_lo (by omega)).mp ⟨hp, hq⟩
+    rw [hsc]
+    unfold twinLo
+    omega
+
+/-- A score-witness in the window beyond `K`.  The frontier's **boxed** condition: it is
+    the exact instance of interval hitting that CPNF needs, and no stronger one. -/
+def WindowWitness (K : ℕ) : Prop :=
+  ∃ h n, 1 ≤ h ∧ 1 ≤ n ∧ K ≤ n ∧ n ≤ window h ∧ h < score n
+
+/-- **The boxed equivalence.** A window witness beyond every bound is *equivalent* to
+    cofinally many direct deaths — hence to unbounded twin primes, via
+    `oftenDirect_iff_unboundedTwins`.
+
+    This is the sharpest honest statement we have: it says exactly which interval must
+    contain a score-witness (bounded by `W(h) = (h²-1)/6`, beyond `K`), and nothing more.
+    It is *not* progress on the conjecture — both sides remain open. -/
+theorem windowWitness_iff_oftenDirect : (∀ K, WindowWitness K) ↔ OftenDirect := by
+  constructor
+  · intro H K
+    obtain ⟨h, n, hh, hn1, hKn, hnw, hsc⟩ := H K
+    obtain ⟨hp, hq⟩ := twin_of_window_witness hn1 hh hnw hsc
+    obtain ⟨k, hd, hk⟩ := direct_of_twin hn1 hp hq
+    exact ⟨k, hKn.trans (le_of_eq hk.symm), hd⟩
+  · intro H K
+    obtain ⟨k, hk, hd⟩ := H K
+    have hn1 : 1 ≤ head k := one_le_head k
+    have hp := prime_of_direct hd
+    obtain ⟨h, hh, hnw, hsc⟩ := window_witness_of_twin hn1 hp.1 hp.2
+    exact ⟨h, head k, hh, hn1, hk, hnw, hsc⟩
+
 end CPNF
