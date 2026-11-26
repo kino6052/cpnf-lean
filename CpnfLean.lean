@@ -28,4 +28,5 @@ import CpnfLean.Obstruction
 import CpnfLean.ObstructionStructure
 import CpnfLean.Sieve
 import CpnfLean.SieveCount
+import CpnfLean.Width1024
 import CpnfLean.Ladder

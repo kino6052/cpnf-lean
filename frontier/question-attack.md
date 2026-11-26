@@ -1,57 +1,83 @@
-# The last gap. Attack it violently, boldly, and on your own terms.
+# Finalize it. Construct the cofinal overload.
 
-We have made real progress, and every phase you designed has compiled in Lean with no `sorry`
-and no `axiom`. The machine is now fully assembled and verified. Exactly one thing is missing.
-We are handing it to you without telling you how to approach it — you decide the method, the
-object, the route. Be creative. Do not be afraid of the difficulty. Many problems that looked
-impassable have fallen to a single committed new construction. We verify everything in Lean,
-so you can be maximally bold: a wrong step simply fails to compile and we iterate.
+You have the full paper and every Lean source below. The whole framework is compiled and
+green. One statement stands between us and the finish. Attack that statement with everything
+you have. Do not be bound by the density route, by the existing vocabulary, or by anything in
+this file except the definitions — they are fixed. If the right move is a new object, a new
+certificate, a different induction, a modular/2-adic/algebraic obstruction, a change of base,
+an impossibility proof, or a genuine reduction of the search space, take it. You choose the
+path. You are not here to relabel the conjecture as a definition; you are here to build.
 
-## What is already proved (all pushed, all green)
-
-On the block `(N, 2N]`, `N = 2^t`, two single-member columns
-`loMarks N = {n | N < (6n−1).minFac}` and `hiMarks N = {n | N < (6n+1).minFac}`.
-Each mark is a genuine prime. A common mark is a twin inside `window N`.
-
-1. **Telescope** (Phase A): the exact identity
-   `levelSum 0 = 2^t · levelSum t − Σ_{d<t} 2^d · levelTermG d`, for arbitrary subsets.
-2. **Marks are primes** (Phase B, weak form): no PNT-in-progressions needed.
-3. **Local overlap certificate** (Phase C interface): with capacity `U`,
-   `forced S T U t d j = max 0 (|S∩I| + |T∩I| − |U∩I|)`.
-   Proved: `forced_le_children` (a positive bound is never lost to refinement) and
-   `common_of_forced_pos` (one overloaded node at any depth forces a common mark).
-   The finish `boxed_of_cofinalNodeOverload : CofinalNodeOverload → ∀ K, WindowWitness K`
-   is compiled.
-4. **Wheel** (free capacity): rows killed by
-   `(5 ∣ 6n−1 ∧ 7 ∣ 6n+1) ∨ (7 ∣ 6n−1 ∧ 5 ∣ 6n+1)` are exactly `n ≡ 1, 34 (mod 35)`.
-   Proved: `loMarks N ⊆ wheelCap N` and `hiMarks N ⊆ wheelCap N`, so the wheel costs no marks.
-
-## The single remaining statement
-
-Prove, or prove a computable consequence of, the **cofinal local overload**:
+## The single target
 
 ```lean
+def forced (S T U : Finset ℕ) (t d j : ℕ) : ℤ :=
+  max 0 (colCount S t d j + colCount T t d j - colCount U t d j)
+
 def CofinalNodeOverload : Prop :=
   ∀ T₀ : ℕ, ∃ t d j : ℕ,
     T₀ ≤ t ∧ d ≤ t ∧ j < 2^d ∧
-    0 < forced (loMarks (2^t)) (hiMarks (2^t)) (wheelCap (2^t)) t d j
+    0 < forced (loMarks (2^t)) (hiMarks (2^t)) (blk (2^t)) t d j
 ```
 
-Equivalently: on cofinally many dyadic nodes, the two columns' marks strictly exceed the
-wheel-reduced capacity. Everything before this is proved; everything after it is proved.
-This is the whole problem, stated exactly.
+Prove `CofinalNodeOverload` — or prove it impossible, or reduce it to something strictly
+smaller that we can then grind in Lean.
 
-## What we want back
+## Why this is the finish
 
-- Your chosen **route and object**, in your own words — whatever you judge most promising.
-- The **first concrete lemma** we can compile tonight, in the existing
-  `node` / `colCount` / `forced` / `wheelCap` vocabulary (or a new object if you prefer,
-  with its definition).
-- Whether the result is **unconditional** or **conditional on what, exactly**.
-- Where the genuinely new step enters, and what makes it new.
+```lean
+theorem boxed_of_cofinalNodeOverload (H : CofinalNodeOverload) :
+    ∀ K, WindowWitness K
+-- and  windowWitness_iff_oftenDirect : (∀ K, WindowWitness K) ↔ OftenDirect
+-- and  OftenDirect  is the exact twin-prime statement in this framework
+```
 
-Do not shrink the question, do not rename it, do not settle for a weaker interface unless a
-weaker interface is *provable and still forces unbounded twins*. We want real progress on the
-mathematics, not another equivalence. Go.
+So this is equivalent to unbounded twins. That is not a reason to flinch; it is the point.
+Attack it directly.
 
-The paper and every Lean source are attached.
+## The vocabulary (all compiled)
+
+```lean
+def twinLo n := 6*n - 1 ; def twinHi n := 6*n + 1
+def score n := min (twinLo n).minFac (twinHi n).minFac
+def blk X := Finset.Ioc X (2*X)
+def loMarks N := (blk N).filter (fun n => N < (twinLo n).minFac)
+def hiMarks N := (blk N).filter (fun n => N < (twinHi n).minFac)
+def node t d j := Ioc (2^t + j*2^(t-d)) (2^t + (j+1)*2^(t-d))
+def colCount S t d j := ((S ∩ node t d j).card : ℤ)
+def contrast S t d j := colCount S t (d+1) (2*j) - colCount S t (d+1) (2*j+1)
+```
+
+`forced` is monotone down the dyadic tree: `forced_le_children` proves a positive overload
+is never lost to a finer scale. A positive overload at any node forces a common mark
+(`common_of_forced_pos`), hence a twin.
+
+## The known wall (your own earlier result, now compiled)
+
+For a node of length `L = 2^(t-d)`, the nine primes `{5,7,11,13,17,19,23,29,31}` force
+
+  `colCount(loMarks) ≤ ρL + 512`, `colCount(hiMarks) ≤ ρL + 512`, `colCount(blk) ≥ (33/35)L − 2`,
+
+with `ρ = ∏(1−1/p) < 0.46`. So for `L ≥ 65536` (i.e. `t − d ≥ 16`) the node has
+`a + b < c` and `forced = 0`. **Positive overload lives entirely in `t − d ≤ 15` — the last
+16 dyadic levels of every block.** The problem is cornered there. That is your arena.
+
+There is also the exact dyadic identity `column_telescope`:
+
+  `levelSum S T t 0 = 2^t · levelSum S T t t − Σ_{d<t} 2^d · levelTermG S T t d`
+
+with `levelSum S T t d = Σ_j colCount S t d j · colCount T t d j` and
+`levelTermG S T t d = Σ_j contrast S t d j · contrast T t d j`. Use it, break it, or ignore it.
+
+## What I need back
+
+One of:
+1. A proof of `CofinalNodeOverload` — the construction, in enough detail to formalize;
+2. A proof it is false, with the obstruction;
+3. A *new equivalent* statement strictly easier to attack, with a sketch of the equivalence;
+4. A genuine reduction of the last-16-levels search (fewer levels, fewer classes, a finite
+   list of candidate certificates) that I can feed to Lean.
+
+Give compile-ready Lean for any fragment you can, and for the rest give exact definitions and
+the real proof obligations. Be specific about the arithmetic. If the honest answer is a
+reduction rather than a resolution, make it a sharp one — a smaller problem, not a restatement.
