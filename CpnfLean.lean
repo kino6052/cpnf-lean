@@ -14,4 +14,6 @@ import CpnfLean.Progression
 import CpnfLean.PerPrime
 import CpnfLean.PowerExcess
 import CpnfLean.PowerRefund
+import CpnfLean.ThinBlock
+import CpnfLean.ThinInjection
 import CpnfLean.Ladder
