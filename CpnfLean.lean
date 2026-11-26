@@ -11,4 +11,5 @@ import CpnfLean.Charge
 import CpnfLean.Wheel
 import CpnfLean.TopBand
 import CpnfLean.Progression
+import CpnfLean.PerPrime
 import CpnfLean.Ladder
