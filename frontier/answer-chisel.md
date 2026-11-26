@@ -1,91 +1,119 @@
-**Yes to the polynomial witness.** In fact, for all sufficiently large \(h\), **every** interval of \(h^5\) consecutive positive indices contains an \(n\) with `h < score n`. This is a lower-bound sieve theorem, not a consequence of replacing the factorial by an lcm. There is also a separate, elementary result: on \((X,2X]\), the **entire top band** of primes from \(\sqrt X\) to the twin cutoff misses a proportion tending to one. The important distinction is *of which set*: it misses almost all **indices**, not necessarily almost all **survivors of the smaller primes**.
+**Method: additive combinatorics of affine-linear forms.** I test what can be deduced from counts for every system with pairwise nonproportional linear parts. The obstruction is a random-set construction with dependence at distance exactly \(2\), not a sieve, a circle integral, or a divisor-tail estimate.
 
-First, one correction to the stated wall matters for the Lean targets. `head_le_of_factor` takes the hypothesis
+**Obstruction theorem.** There is a single set \(A\subset\mathbb N\) with **no** pair \(m,m+2\), for which the prime-tuple asymptotic with the usual local factors holds for **every** fixed system of affine-linear forms with pairwise nonproportional nonzero linear parts, on the boxes specified below. In particular, \(A\) has the prime number theorem in every fixed reduced residue class.
+
+Thus even granting the full main terms, not just existence of configurations or uniformity bounds of some fixed order, this class of inputs does not force one twin. The restriction to nonproportional linear parts is essential. Here is the construction and the estimate that proves it.
+
+### The statistics to be preserved
+
+Write \(\psi_i(x)=a_i\cdot x+b_i\), \(1\le i\le k\), on \(\mathbb Z^d\). Fix the forms, with \(a_i\ne0\) and no two \(a_i\) proportional over \(\mathbb Q\). Take integer boxes \(B_N=[N,2N)^d\cap\mathbb Z^d\) and assume that on these boxes
+\[
+cN\le \psi_i(x)\le CN
+\]
+for some fixed \(0<c<C\) and all sufficiently large \(N\). Define
+\[
+\beta_p=(1-1/p)^{-k}\,p^{-d}
+ \#\{x\in\mathbb F_p^d:\ \psi_i(x)\ne0\bmod p\ \text{for every }i\}.
+\]
+The theorem asserts that, simultaneously for all such systems, as \(N\) tends to infinity through **all integers**,
+\[
+\frac{(\log N)^k}{N^d}
+\sum_{x\in B_N}\prod_{i=1}^k 1_A(\psi_i(x))
+\ \longrightarrow\ \prod_p\beta_p. \tag{1}
+\]
+
+### The construction: a gate invisible off three diagonals
+
+The key step works for *any* prescribed one-point probabilities \(0\le u_m\le 1/4\). Take independent fair bits \(G_m\) and, independently of them and one another, bits \(H_m\) of means \(4u_m\). For \(m\ge3\) set
+\[
+Z_m=H_mG_m(1-G_{m-2}),\qquad A=\{m\ge3:Z_m=1\}.
+\]
+Then
+\[
+\mathbb E Z_m=u_m,\qquad Z_m Z_{m+2}=0
+\]
+exactly. More importantly, the variables at any list of sites are **jointly independent** if all pairwise differences avoid \(\{0,2,-2\}\): they read disjoint underlying bits.
+
+For a fixed system in (1), the inputs where this independence can fail lie on
+\[
+(a_i-a_j)\cdot x=b_j-b_i+h,\qquad h\in\{0,2,-2\}.
+\]
+Each equation has at most \(N^{d-1}\) solutions in the box: fix all but a coordinate with nonzero coefficient. Consequently, for arbitrary marginals \(u\),
+\[
+\left|
+\mathbb E\sum_{x\in B_N}\prod_i Z_{\psi_i(x)}
+-\sum_{x\in B_N}\prod_i u_{\psi_i(x)}
+\right|
+\le 3\binom{k}{2}N^{d-1}. \tag{2}
+\]
+At the target pair of forms \(x,x+2\), one of those exceptional equations is instead the identity on the **whole box**. That dimension jump is the mechanism of the obstruction.
+
+### Calibrating the marginals
+
+It remains to make the right side of (2) have the actual prime main terms, so that the countermodel cannot be dismissed on grounds of wrong local densities. On \(2^j\le m<2^{j+1}\) put
+\[
+z_j=\lfloor\log(j+2)\rfloor,\qquad
+W_j=\prod_{p\le z_j}p,\qquad
+u_m=\frac{W_j}{\varphi(W_j)}
+       \frac{1_{(m,W_j)=1}}{\log m}.
+\]
+Set \(u_m=0\) in finitely many initial blocks to ensure \(u_m\le1/4\). This is legitimate even using only the elementary bound
+\[
+W_j/\varphi(W_j)\le\prod_{2\le n\le z_j}(1-1/n)^{-1}=z_j
+\]
+for \(z_j\ge2\). The periodic function here specifies the desired **first marginal** of a synthetic set; no lower or upper bound for sifted primes is used.
+
+To evaluate the deterministic sum, partition \(B_N\) according to the dyadic block of each \(\psi_i(x)\). There are \(O_{c,C,k}(1)\) pieces, each cut out by a bounded number of affine inequalities. On each piece the moduli \(W_{j_i}\) are fixed and nested. Their largest, \(W\), satisfies
+\[
+W\le z!\ =N^{o(1)},\qquad z=\max_i z_{j_i}=O(\log\log N).
+\]
+Replace every \(\log\psi_i(x)\) by \(\log N\) with relative error \(O_{c,C,k}(1/\log N)\) in the product. The remaining weight is periodic modulo \(W\) in every coordinate and bounded by \(O(z^k)\).
+
+Tile by cubes of side \(W\). Full cubes give exactly the periodic mean; the contribution to the **normalized** average from replacing the weights by their mean on boundary cubes is
+\[
+O_{\psi,c,C}\!\left(z^k W/N\right)=o(1).
+\]
+Indeed, those cubes lie within \(O_{\psi,d}(W)\) of finitely many bounding hyperplanes; fixing all but one coordinate bounds the number of lattice sites in each such slab by \(O_{\psi,d}(WN^{d-1})\).
+
+By the Chinese remainder theorem, the periodic mean on a piece is the product of local factors calculated with just the forms active at that prime, namely \(i\) with \(p\le z_{j_i}\). These products converge to \(\prod_p\beta_p\) uniformly over the pieces. To see why, outside a fixed finite set of primes each form cuts out a hyperplane of density \(1/p\), and each pair cuts out an intersection of density \(1/p^2\). This follows by retaining one nonzero coefficient per form and one nonzero two-by-two minor per pair modulo \(p\). For **any subset** of \(s\) active forms, the union therefore has density \(s/p+O_k(p^{-2})\), by the first two union bounds. After normalization by \((1-1/p)^{-s}\), the factor is \(1+O_k(p^{-2})\). Every fixed prime eventually sees all the forms, since \(\min_i z_{j_i}\to\infty\). This also handles a zero local factor: it is eventually present on every piece.
+
+Summing by piece volumes proves (1) in expectation, using (2).
+
+### One realization works at every scale
+
+Let \(S_N=\sum_{x\in B_N}\prod_i Z_{\psi_i(x)}\). It reads \(O_{c,C}(N)\) independent bits. Changing one bit changes at most two site indicators, and each site occurs in at most \(kN^{d-1}\) summands, by solving one nonconstant linear equation. McDiarmid’s bounded-differences inequality gives, for a constant \(c_\psi>0\),
+\[
+\Pr\!\left(\left|S_N-\mathbb E S_N\right|>N^{d-1/4}\right)
+\le 2\exp(-c_\psi N^{1/2}).
+\]
+This is summable in \(N\), and \(N^{d-1/4}=o(N^d/(\log N)^k)\) for every fixed \(k\). Borel–Cantelli and a countable intersection over the integer systems give one realization satisfying (1) for all of them. Taking the one-form systems \(qx+r\) with \((q,r)=1\) gives the stated progression asymptotics by dyadic summation. The no-twins property holds for **every** realization, without a probability estimate.
+
+Here is the deterministic gate in Lean. The second lemma records the disjointness of the gate-bit addresses used in (2).
+
 ```lean
-hlo : twinLo (head k) ≤ score (head k)
+import Mathlib
+
+namespace CPNF.AffineBarrier
+
+def kept (g h : ℕ → Bool) (m : ℕ) : Prop :=
+  3 ≤ m ∧ h m = true ∧ g m = true ∧ g (m - 2) = false
+
+theorem no_pair (g h : ℕ → Bool) (m : ℕ) :
+    ¬ (kept g h m ∧ kept g h (m + 2)) := by
+  rintro ⟨⟨_, _, hm, _⟩, ⟨_, _, _, hn⟩⟩
+  have he : m + 2 - 2 = m := by omega
+  rw [he, hm] at hn
+  cases hn
+
+theorem disjoint_reads {m n : ℕ} (hm : 3 ≤ m) (hn : 3 ≤ n)
+    (h0 : m ≠ n) (hp : m + 2 ≠ n) (hq : n + 2 ≠ m) :
+    Disjoint ({m, m - 2} : Finset ℕ) ({n, n - 2} : Finset ℕ) := by
+  rw [Finset.disjoint_left]
+  intro x hx hy
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hx hy
+  rcases hx with hx | hx <;> rcases hy with hy | hy <;> omega
+
+end CPNF.AffineBarrier
 ```
-which, by `twin_of_score_row`, **already says the head is a twin**. Its contrapositive retains `hlo`. The unconditional inference available from `minFac_le_of_tail` is from **score** escaping \(t\), not from **index** escaping \(t\). The unconditional wall theorem to build on is `twin_iff_sq_test`.
 
-### 1. An elementary top-band exclusion, on the actual short interval
-
-Here is a finite theorem with small constants. Let \(t=\lfloor\sqrt X\rfloor\), \(I=(X,2X]\cap\mathbb N\), and take
-\[
- B_X=\{p:\ p\text{ prime},\ t<p,\ p^2\le 12X+1\}.
-\]
-For \(t\ge 10000\),
-\[
- 20\,\#\{n\in I:\ \forall p\in B_X,\ \neg\texttt{hit}\ p\ n\}\ \ge X .
-\]
-In particular this is not a count on a full primorial period substituted for a count in \(I\).
-
-**Proof.** All the primes in question lie in \((t,4t]\), since \(X<(t+1)^2\). Split at \(2t\). In \((u,2u]\) there are at most \(48(u/210+1)\) primes for \(u\ge 7\): there are exactly 48 residues coprime to 210 per period. Each prime there hits at most \(2(X/u+1)\) indices of \(I\), by the two progression counts. Summing for \(u=t,2t\), the number hit is at most
-\[
- \frac{32}{35}X+\frac{48}{35}t+144X/t+192
- \ \le\ \frac{19}{20}X
-\]
-for the indicated range, using \(t^2\le X\). All divisions in this proof can be rational divisions followed by clearing denominators. The only wheel computation, `φ 210 = 48`, is a closed finite calculation.
-
-A stronger first-order target replaces \(1/20\) survival by arbitrarily small **loss**:
-\[
- \forall A\ge1\ \exists X_0\ \forall X\ge X_0,\qquad
- A\,\#\{n\in I:\exists p\in B_X,\ \texttt{hit}\ p\ n\}\le X.
-\]
-Use the identical two-block proof with a fixed wheel \(M\) instead of 210. Its leading loss bound is \(4\varphi(M)X/M\); the remaining terms divided by \(X\) go to zero for fixed \(M\), by the displayed counting argument. One can choose \(4A\varphi(M)/M<1\) entirely elementarily: for \(M=\prod_{p\le b}p\), the finite Euler product \(M/\varphi(M)\) dominates \(\sum_{j\le b}1/j\) by geometric expansion and factorization. Dyadic grouping makes this last sum arbitrarily large.
-
-**What this buys:** one may even pre-sieve by any **fixed** bottom wheel with positive survivor fraction and still retain a positive fraction after imposing the whole top band: choose the top loss smaller than half the bottom wheel’s fraction, allowing for the bottom wheel’s end-period error. The word *fixed* matters. This subtraction gives no positive lower bound after pre-sieving by **all** \(p\le t\).
-
-### 2. A polynomial bound for the first crossing
-
-The Lean-facing target is
-```lean
-∃ h₀ : ℕ, ∀ h : ℕ, h₀ ≤ h → ∀ a : ℕ,
-  ∃ n : ℕ, a < n ∧ n ≤ a + h^5 ∧ h < score n
-```
-Here is specifically what external mathematics proves it. Apply the dimension-two lower-bound beta sieve (for example, the beta sieve in Friedlander–Iwaniec, *Opera de Cribro*) to the indices \(a<n\le a+H\), with \(H=h^5\), sifting primes \(5\le p<z=h+1\). The data to supply are:
-
-* For squarefree \(d\) supported on the sifting primes, simultaneous hits occupy exactly \(\rho(d)=2^{\omega(d)}\) classes modulo \(d\), by CRT; \(\omega(d)\) counts distinct prime divisors. Thus their count is \(H\rho(d)/d+r_d\), with \(|r_d|\le\rho(d)\), **uniformly in \(a\)**.
-* The dimension condition is the usual Mertens product bound for \(\prod_{w\le p<z,\ p\ge5}(1-2/p)^{-1}\), of dimension two. It follows from the ordinary prime Mertens product by extracting \((1-1/p)^{-2}\); the correction factors are \(1+O(p^{-2})\).
-* Take level \(D=H/(\log H)^{10}\). The total absolute remainder for the beta-sieve weights (of modulus at most one) is at most
-  \[
-  \sum_{d\le D}2^{\omega(d)}
-     \le \sum_{d\le D}\sum_{e\mid d}1
-     \le D(1+\log D).
-  \]
-  This is negligible compared with \(H/(\log h)^2\).
-* The ratio \(\log D/\log z\) tends to **5**, strictly above the dimension-two beta-sieve lower-bound threshold. Hence the lower bound is a positive constant times \(H/(\log h)^2\) for sufficiently large \(h\), uniformly in the starting point. Each survivor has `h < score n`.
-
-More generally the same proof works with any fixed exponent strictly above the sifting limit of the lower-bound theorem used. **The content here is not a positive constant density:** it is a lower bound large enough to force a witness, in every translate. The analytic sieve input is substantive and is not in `Count.lean`; `progression_card` is a starting point for the first bullet, not a substitute for the third and fourth together.
-
-With \(a=0\) this gives exactly the requested large-\(h\) polynomial location. If an exponent valid for **every \(h\ge1\)** is desired, enlarge it to absorb the finitely many factorial witnesses for \(2\le h<h_0\); \(n=1\) handles \(h=1\). Taking the product of primes \(5\le p\le h\) as the index is a different construction: it forces the **single** safe residue \(0\) at every prime, and that product grows faster than every polynomial. The sieve obtains its gain by retaining **all** \(p-2\) safe residues at each prime.
-
-### 3. A first-order gap property and its exact payoff
-
-Use a gap measured in **indices** but parameterized by **score**. For integers \(h,a,L\ge0\) write
-\[
- \mathrm{HitWindow}(h,a,L)
- \quad:\!\iff\quad
- \exists n,\ a<n\le a+L\ \land\ h<\texttt{score}\ n .
-\]
-There are three genuinely different strengths:
-
-* **Fixed-scale bounded gaps:** \(\forall h\ \exists L\ \forall a,\ \mathrm{HitWindow}(h,a,L)\). Elementary: take \(L=\prod_{5\le p\le h}p\) over primes and use a multiple of \(L\). Part 2 improves the gap bound to \(h^5\) eventually. Neither bound places a witness inside the certification window.
-* **A constant gap independent of \(h\)** is false, even if the allowed starting points are arbitrarily large. For any proposed length \(L\ge1\), choose distinct primes \(p_i>3\), \(1\le i\le L\), and solve \(6(a+i)\equiv1\bmod p_i\) by CRT. For \(h=\max_i p_i\), the whole interval fails. Translating \(a\) by the product repeats the failure.
-* **One well-placed gap bound**, not one in every translate, suffices for directness. A sharp target using your existing `window` is
-  \[
-  \boxed{\quad
-  \forall K\ \exists h,n,\quad
-     1\le n,\quad K\le n\le\texttt{window}\ h,\quad
-     h<\texttt{score}\ n .
-  \quad}
-  \]
-  This is **equivalent** to `OftenDirect`. Forward: the witness satisfies \(6n+1\le h^2<\texttt{score}(n)^2\); apply `twin_iff_sq_test` and `direct_of_twin`. Reverse: take a cofinal twin and put \(h=6n-2\). Its score is \(6n-1\), and \((6n-2)^2\ge6n+1\) for \(n\ge1\).
-
-Thus there is no distinguished “weakest” extra property without a restriction on the language of hypotheses: the conclusion itself is weakest up to implication. But the boxed equivalence identifies exactly **which instance of interval hitting** is needed. It does **not** demand uniform gaps, a twin in every dyadic interval, or even that the qualifying \(h\)'s have bounded ratios. The gap between Parts 2 and 3 is quantitative: the known guarantee gives room of order \(h^5\); the sufficient window ends at \((h^2-1)/6\), and must contain a witness **beyond \(K\)**.
-
-### 4. The no-go that is actually a theorem
-
-There is **no known prohibition on a combinatorial proof** at the twin cutoff, and no density or analytic fact known to be necessary for every proof. Exact finite inclusion–exclusion even *decides* every individual finite window. What is missing is a uniform or cofinal positivity proof, not a decision procedure.
-
-There is, however, a clean impossibility theorem for the paper’s **fixed-modulus projection**. For any \(M\ge1\), old residue \(r<M\), and fresh prime \(q\ge5\) coprime to \(M\), the \(q\) lifts \(r+jM,\ 0\le j<q\), contain **exactly two hits and exactly \(q-2\) misses** for `hit q`. Multiplication by \(6M\) permutes residues modulo \(q\). Thus the projection of the hits to residues modulo \(M\) is **all** residues, and the projection of the misses is also **all** residues. Neither projection can track a representative’s death. More strongly, for any finite list of fresh primes, *every* old residue has arbitrarily large lifts missing the whole list: impose \(n\equiv0\bmod q\) at each fresh prime. This precisely invalidates the finite-subcover step in Appendix D, without ruling out arguments that keep the interval and the lifts.
-
-My suggested formalization order is **the lift-count lemma, the \(1/20\) top-band theorem, then the boxed equivalence**. All three are finite arithmetic with the infrastructure shown. Keep the \(h^5\) interval theorem as a separate sieve formalization target: it is an unconditional improvement to `score_unbounded`, whereas promoting its exponent and location to the boxed window is the unresolved step.
+The conclusion concerns precisely what the method can infer: **no argument whose only prime-specific premises are the statistics (1) can prove cofinal twins**. Increasing the dimension, the number of forms, or the fixed complexity does not cure the loss. The countermodel satisfies all those premises simultaneously and has identically zero mass at shift \(2\).

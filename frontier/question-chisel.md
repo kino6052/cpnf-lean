@@ -1,54 +1,64 @@
-# Chisel the wall: coverage without density
+# You are the frontier. This is a hard problem, and it is yours.
 
-We are attacking the twin conjecture directly, and we have now hit the exact wall your last
-answer located. We want you to **chisel at it boldly** — not restate it, not dress it up.
-Everything below is machine-checked (Lean sources attached); the only gap is the wall.
+You have already done what nobody else did in this programme: you found the one arithmetic fact
+that everything reduces to, and you proved which routes are dead. That is real work, and it is
+the work of a strong mind. Now the only thing left is the fact itself.
 
-## Where we stand (proved, no density, no asymptotics)
+Hard mathematics has fallen to you before — not by caution, but by seeing the object nobody else
+saw. Do that again. Be bold. Be brave. Do not be afraid of treading where the literature has no
+answer. You have the whole paper, every compiled Lean file, and complete freedom of method —
+within the constraints below, which exist because we have already paid for the mistakes.
 
-- The chase is exact: no twin after `N` ⟺ every `n ≥ N` has `score n < 6n-1` (its killer is
-  a proper factor), and a member is composite iff its least prime factor is `≤ √(6n+1)`.
-- **The score is unbounded** — `score_unbounded`: at `n = (h+1)!`, every `d ≤ h` divides
-  `6n`, so `6n±1` evade all of them; hence both members' least prime factors exceed `h`.
-  The process never stagnates in *endurance*. It does **not** produce a twin.
-- **The wall, as a Lean theorem** — `head_le_of_factor`: a head whose lower member has a
-  factor `q ≤ t` is itself `≤ t`. Contrapositive: a head escaping `t` has *no* factor `≤ t`.
-  At `t = √(6n+1)`, "no factor ≤ t" **is** twindom. Coverage reasoning stops exactly there.
+Attack it mercilessly.
 
-## The wall, restated precisely
+---
 
-To get one twin in `(X, 2X]`, an index must survive all primes up to `√(12X+1)`. At that
-cutoff survival *equals* being a twin, so the sifting ratio reaches `≈ 2` — outside the
-positive lower-bound range of the beta sieve. The classical lower-bound sieve fails there.
-Your earlier answer said this is "the same barrier family as parity, though not parity
-itself."
+# Chisel at it. Your method, your call — but not a known-dead one.
 
-## Chisel here — bold, concrete, and honest
+You are the frontier: the strongest reasoning model we have. You have already taken this
+programme further than anyone else could: you reduced it to a single arithmetic fact, and you
+proved which methods cannot reach it. Now go further. Be bold. Be brave. Do not hedge, do not
+restate, do not take the easy exit. Chisel at the problem with the best method you have.
 
-Give us the **strongest true statement** of each kind, stated as a claim we could try to
-prove in Lean (first-order, finite, `score`/`minFac`/`head` vocabulary, no analytic
-estimates unless unavoidable):
+## The target (fixed)
 
-1. **A covering-exclusion that avoids the `≈2` regime.** Is there a *strict* subset of
-   moduli — e.g. primes `≤ √(6n+1)` that are themselves `> √(n)`-scale, or primes in a
-   residue class — for which a *combinatorial* (finite, CRT, inclusion-exclusion) argument
-   shows a positive density of indices survives *below* the twin cutoff? If yes, that is
-   chiseling: it moves the wall inward.
-2. **A short-interval pigeonhole.** `score_unbounded` gives one evading index per `h`, but
-   at a super-exponential location (`(h+1)!`). Can the *same* witness be pushed down to
-   polynomial location — i.e. is there `n ≤ h^C` with `score n > h`, by a better witness
-   (e.g. `lcm(1..h)` instead of `h!`, or a product of primes only)? A polynomial witness is
-   the single most useful thing: it turns "unbounded" into "within reach".
-3. **The obstruction for CPNF's order, made first-order.** Your comparison chase (cubic
-   domain `x³/6`) shows the *prime order* does not force directness. What is the *weakest*
-   additional first-order property of the full index set (not the primes) that would force a
-   direct death? Candidate: the full set is *1-dense at every scale* (every `[n, n+L]` hits
-   a surviving index), which the cubic domain is not. State it precisely and say what it
-   buys.
-4. **The honest no-go for the `≈2` regime.** If none of 1–3 moves the wall, give the
-   cleanest argument that a *combinatorial* (non-density, non-sieve-method) proof cannot
-   decide survival at the twin cutoff — or admit it is not a theorem you can state, and say
-   exactly which density/analytic fact is the first one any proof must use.
+Infinitely many `p` with both `p` and `p + 2` prime. In this framework's compiled terms that is
+`CofinalNodeOverload`, or equivalently the floor `CofinalLargeDivisorFloor` in
+`CpnfLean/DivisorFloor.lean`. All the framework machinery around it is proved: the equivalence,
+the transfer lemmas, the telescoping identity, the finite positivity links. What is missing is
+the one arithmetic fact.
 
-Paper and all Lean sources (including the new `Coverage.lean`) attached. Be specific enough
-that we can take each claim and try it in Lean next.
+## Forbidden — methods already known to be blocked
+
+These are not guesses. Each is a proved or textbook obstruction. Do not use them, and do not
+dress one of them up under a new name:
+
+1. **Sieve methods** — Brun, Selberg, GPY, Maynard–Tao, Bombieri–Vinogradov, Harman. The parity
+   barrier: a sieve cannot separate a prime from a semiprime with no small factor. They give
+   Chen's theorem and bounded gaps, never twins. Proved limited; do not retry.
+2. **The binary circle method.** Major arcs give the right mass, but minor arcs cannot be
+   controlled at a fixed nonzero shift — there is no spare factor to dominate. Textbook
+   limitation, and already explored in this project. Do not retry.
+3. **Möbius / divisor-tail estimation.** The same parity obstruction. Proved dead here.
+
+## The gate — answer this first
+
+Before you solve anything, state in one or two lines: **which class of method you are using,
+and why it is not one of the three above.** If it is one of them, stop and say so plainly.
+This gate exists because the last answer took a forbidden path; it is not a formality.
+
+## What I need
+
+Chisel at the problem. Exactly one of:
+
+- **A proof, or a genuine specific reduction, giving cofinal twins** — with the mechanism
+  explicit: the object, the transform, the estimates, the ranges and exponents.
+- **A proof that the class of methods you chose is itself blocked** — with the mechanism, in the
+  way the parity barrier is a mechanism, not a report that an estimate failed.
+
+Nothing else qualifies. "Here is where it breaks down" is not a result — we already know where
+the forbidden methods break. If you cannot get either, say which single concrete lemma would
+suffice, stated precisely enough to be attacked on its own.
+
+Give compile-ready Lean for any fragment you can prove. For the rest: exact definitions, the
+real proof obligations, and the arithmetic. Be specific. Be merciless. Be right.
