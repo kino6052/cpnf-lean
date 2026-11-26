@@ -9,4 +9,5 @@ import CpnfLean.Correspondence
 import CpnfLean.Coverage
 import CpnfLean.Charge
 import CpnfLean.Wheel
+import CpnfLean.TopBand
 import CpnfLean.Ladder
