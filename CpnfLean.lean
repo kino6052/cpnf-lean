@@ -18,4 +18,5 @@ import CpnfLean.ThinBlock
 import CpnfLean.ThinInjection
 import CpnfLean.SeventhMask
 import CpnfLean.ColumnSplit
+import CpnfLean.ColumnTelescope
 import CpnfLean.Ladder
