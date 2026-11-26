@@ -67,4 +67,39 @@ theorem vonMangoldt_eq_sum_moebius_mul_log (m : ℕ) (hm : 0 < m) :
     omega
   rw [ite_eq_right hne, Nat.cast_div hdvd (by exact_mod_cast hd0)]
 
+/-- The unconditional transfer: if the *complete* prime-correlation mass `F` keeps exceeding
+`2(s-1)` on average, then the large-divisor tail has a cofinal floor and the programme closes.
+
+`F u = sum_{p ≤ u} log p * Λ(p+2)` is the whole correlation (small + large divisors). The two
+lemmas below formalize the dyadic accumulation: if the tail `B` is always `< -2^t` from some
+scale on, while the small-divisor part is `(s+ε)2^t`, then `F` grows by at most `(s-1+ε)2^t`
+per dyadic level, so `F(u)/u` stays below `2(s-1)+ε`. Contrapositively, a limsup of `F(u)/u`
+beyond `2(s-1)` forces the floor.
+
+The arithmetic input is `A(x) = (s+o(1))x` with `s = 2C₂`. The point of the frontier's result:
+a cofinal floor of coefficient `1` (what `CofinalLargeDivisorFloor` asks) is *not* available
+from positivity alone — positivity only yields coefficient `s`. The gap between `s` and `1`
+is exactly the parity-sensitive statement "p+2 is prime with positive frequency", i.e. the
+twin-prime correlation itself. No divisor bookkeeping closes it. -/
+
+theorem dyadic_increment_of_bad_tail
+    (F A : ℕ → ℝ) (s e : ℝ) (t : ℕ)
+    (hsplit : F (2^(t+1)) - F (2^t) = A (2^t) + largeDivisorTail (2^t))
+    (hsmall : A (2^t) ≤ (s + e) * (2 : ℝ)^t)
+    (hbad : largeDivisorTail (2^t) < -(2 : ℝ)^t) :
+    F (2^(t+1)) - F (2^t) < (s - 1 + e) * (2 : ℝ)^t := by
+  linarith
+
+theorem dyadic_accumulate
+    (G : ℕ → ℝ) (c : ℝ) (a : ℕ)
+    (h : ∀ t : ℕ, a ≤ t → G (t+1) - G t ≤ c * (2 : ℝ)^t) :
+    ∀ j : ℕ, a ≤ j → G j - G a ≤ c * ((2 : ℝ)^j - (2 : ℝ)^a) := by
+  intro j hj
+  induction j, hj using Nat.le_induction with
+  | base => simp
+  | succ j hj ih =>
+      have step := h j hj
+      rw [pow_succ]
+      linarith
+
 end CPNF
