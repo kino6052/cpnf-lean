@@ -1,57 +1,66 @@
-**Attack: use a real character to detect the composite impostors in a Chen sieve.** Don’t try to raise the roughness cutoff from \(h^5\) to \(h^2\). Instead, change what has to be detected at the lower cutoff. Chen’s theorem supplies primes \(p\) for which \(p+2\) is prime or a product of two primes, counted with multiplicity. On rows where a real Dirichlet character \(\chi\) has \(\chi(p+2)=-1\), every composite impostor has **exactly one** prime factor \(q\) with \(\chi(q)=+1\). Charge the impostor to that factor, even when it is the *larger* factor. This gives a finite subtraction with no multiplicity loss. The analytic reason to try it is specific: a real character with an exceptional zero can have unusually few \(+1\) primes in the relevant weighted sense. Heath-Brown’s *Prime twins and Siegel zeros* gives an actual conditional twin-prime theorem in this regime. The proposed finite lemma is a way to expose this mechanism in CPNF, not a claim that an exceptional zero exists or that Heath-Brown’s proof uses this particular subtraction.
+**For the stated wheel, every overloaded node on a sufficiently large block has fewer than \(65{,}536\) rows.** In particular, no argument that produces overload on nodes of growing length can work, even if the twin-prime conjecture is true. This is an unconditional restriction on the proposed certificate, not an equivalence obtained by going to singleton leaves.
 
-### First lemma: exact charge for the semiprime error
+I do not have an unconditional proof of cofinal overload. My route is to use a one-column upper sieve to rule out scales, then use a genuinely two-column theorem for the conditional positive result.
 
-Here is the statement I would formalize. Use an integer-valued multiplicative function in the finite lemma; periodicity and analytic hypotheses belong only in the later estimates. The finset `S` need not be all the rows of an interval, so one can impose character conditions or other restrictions without changing the lemma.
+### The scale obstruction
+
+Let \(N=2^t\ge32\), let \(I=\texttt{node}\ t\ d\ j\) be a valid node, and put \(L=2^{t-d}\). Write \(a,b,c\) for its low-mark count, high-mark count, and wheel capacity. Use the nine primes
+\[
+P=\{5,7,11,13,17,19,23,29,31\},\qquad
+\rho=\prod_{p\in P}(1-1/p)<460/1000.
+\]
+
+Here is the key estimate, **uniform in the starting point of the node**:
+\[
+a\le \rho L+512,\qquad b\le \rho L+512.
+\]
+To prove it, take either sign. A marked member has no divisor in \(P\), since every \(p\in P\) is at most \(N\). Count the rows avoiding \(P\) by inclusion–exclusion. For each \(D\subseteq P\), set \(m_D=\prod_{p\in D}p\). The simultaneous divisibilities on that **one sign** specify exactly one residue class modulo \(m_D\), since \(6\) is invertible modulo \(m_D\) (with the empty subset counting all rows). Its count on \(I\) differs from \(L/m_D\) by less than one. The main terms sum to \(\rho L\), and there are only \(2^9=512\) errors. In particular, there is **no** error proportional to the period \(\prod P\).
+
+On the other side, the wheel deletes only the classes \(1,34\bmod 35\). Each occurs at most \(L/35+1\) times, so
+\[
+c\ge (33/35)L-2.
+\]
+For \(L\ge65536\) these inequalities give \(a+b<c\), hence `forced = 0`. Equivalently, on blocks \(N\ge32\), **positive overload requires \(t-d\le15\)**. The constant is not intended to be optimal.
+
+### First Lean patch
+
+These are the numerical certificate and the node-level closing lemma I would compile first. They separate the finite rational calculation from the progression-counting proof above. I have not run this patch.
 
 ```lean
+import CpnfLean.Wheel
+
 namespace CPNF
 
-def TwoPrimeProduct (m : ℕ) : Prop :=
-  ∃ a b : ℕ, Nat.Prime a ∧ Nat.Prime b ∧ m = a * b
+theorem nine_prime_density :
+    (1 - 1/5 : ℚ) * (1 - 1/7) * (1 - 1/11) *
+    (1 - 1/13) * (1 - 1/17) * (1 - 1/19) *
+    (1 - 1/23) * (1 - 1/29) * (1 - 1/31) < 460/1000 := by
+  norm_num
 
-def plusPrimes (χ : ℕ → ℤ) (z U : ℕ) : Finset ℕ :=
-  (Finset.Ioc z U).filter (fun q => Nat.Prime q ∧ χ q = 1)
+theorem forced_zero_of_nine_prime_bounds
+    {S T U : Finset ℕ} {t d j : ℕ} {L : ℤ}
+    (hL : 65536 ≤ L)
+    (hS : 1000 * colCount S t d j ≤ 460 * L + 512000)
+    (hT : 1000 * colCount T t d j ≤ 460 * L + 512000)
+    (hU : 33 * L ≤ 35 * colCount U t d j + 70) :
+    forced S T U t d j = 0 := by
+  unfold forced
+  apply max_eq_left
+  omega
 
--- Proposed statement, not a claim of a checked build.
-theorem chen_charge_exact
-    (S : Finset ℕ) (χ : ℕ → ℤ) (z H : ℕ)
-    (hmul : ∀ a b, χ (a * b) = χ a * χ b)
-    (hS : ∀ n ∈ S,
-      1 ≤ n ∧ twinHi n ≤ H ∧ z < score n ∧
-      Nat.Prime (twinLo n) ∧ χ (twinHi n) = -1 ∧
-      (Nat.Prime (twinHi n) ∨ TwoPrimeProduct (twinHi n))) :
-    S.card =
-      (S.filter (fun n => score n = twinLo n)).card +
-      ∑ q ∈ plusPrimes χ z (H / (z + 1)),
-        (S.filter (fun n => q ∣ twinHi n)).card
+end CPNF
 ```
 
-**Proof.** Reverse the order of the finite incidence sum, and fix a row \(n\). Write \(m=6n+1\).
+One source detail matters for the next patch: the pasted `Overload.lean` defines `CofinalNodeOverload` with `blk`, not `wheelCap`. Also, the pasted `Wheel.lean` contains the residue-to-kill implications; the capacity **lower** bound needs the kill-to-residue implication. If it is not in the pushed version, the missing direction for positive rows has the short proof `unfold wheelKilled twinLo twinHi at hk; rcases hk with h | h <;> omega`, with goal `n % 35 = 1 ∨ n % 35 = 34` and hypothesis `1 ≤ n`. The direction matters: proving that two classes *are* killed does not bound how many classes are killed.
 
-* If \(m\) is prime, its only prime divisor is itself, of character \(-1\). Its incidence count is zero, and `twin_iff_score_eq_lo` puts it in the first summand.
-* Otherwise \(m=ab\) for primes \(a,b\). Since \(\chi(a)\chi(b)=-1\) in \(\mathbb Z\), the two values are \(+1,-1\) in some order. In particular \(a\ne b\). Call the positive-character factor \(q\) and the other \(r\). Both exceed \(z\), because \(z<\operatorname{score}(n)\le m.\mathrm{minFac}\). Thus \(q(z+1)\le qr=m\le H\), putting \(q\) in the indicated finset. Any prime dividing \(ab\) equals \(a\) or \(b\), so the incidence count is **one**. The first summand does not count this row.
+### A conditional route that actually reaches the target
 
-The upper endpoint \(H/(z+1)\), **not** \(\sqrt H\), matters: the sign picks out a unique factor, but does not pick out the smaller one. No estimate on prime distribution enters the identity.
-
-### The estimate to attack
-
-Take \(X\le n\le 2X\), \(H=12X+1\), and form `S` from the rows satisfying `hS`. For \(X\ge1\) it suffices to beat the following **upper bound** for the charge:
+An analytic hypothesis independent in formulation of twin counts is the following: there is a sequence of primitive real Dirichlet characters of conductors \(q_i\to\infty\) whose \(L\)-functions have real zeros \(\beta_i<1\) satisfying
 \[
- B_\chi(X,z)=
- \sum_{q\in\mathrm{plusPrimes}(\chi,z,\lfloor H/(z+1)\rfloor)}
- \#\{r\text{ prime}:r>z,\ \chi(r)=-1,\ 
-         6X+1\le qr\le H,\ qr\equiv1\pmod 6,\ qr-2\text{ prime}\}.
+(1-\beta_i)\log q_i\longrightarrow 0.
 \]
-Indeed \((q,r)\) recovers \(n=(qr-1)/6\). The proposed analytic task is to obtain a **Chen lower bound for \(|S|\)** and a **strictly smaller upper bound for \(B_\chi\)** on cofinally many scales. For the upper bound one can drop \(\chi(r)=-1\) and use an upper-bound sieve on the two linear forms \(r,qr-2\) for fixed \(q\); one should retain the restriction \(\chi(q)=+1\) in the outer sum. This is an estimate on prime factors of one sign, not an estimate asserting that a twin row exists. The two estimates must use the *same* character, roughness cutoff, and scale.
+Under this exceptional-zero hypothesis, Heath-Brown’s *Prime twins and Siegel zeros* gives unbounded twin primes. This is an external mathematical theorem, not a result in the attached Lean sources.
 
-### Why this takes a different route through the four walls
+To get **the exact requested node**, take a twin index \(n>2^{\max(T_0,5)}\) supplied by that theorem. Choose the unique \(t\) with \(2^t<n\le2^{t+1}\), set \(d=t\), and take \(j=n-2^t-1\). Then \(j<2^t\) and `node t t j = {n}`. Both least factors equal their respective prime members and exceed \(2^t\); the wheel retains the row. The three counts are \(1,1,1\), so `forced = 1` for the wheel capacity, and also for the pasted `blk` capacity.
 
-1. **Parity:** Chen leaves a genuine prime-versus-semiprime ambiguity. The character provides extra arithmetic data: on a negative-character semiprime the positive-character factor is mandatory. Multiplicativity gives the charge; only an independently proved **scarcity** of those factors could make the charge small. Without scarcity, the identity has not broken parity.
-2. **Sifting ratio:** No lower-bound sieve is run to \(\sqrt H\). The lower bound sought is for almost primes at a smaller cutoff; the final removal is by the signed-factor budget. Only *after* finding a prime row does one choose the certification threshold via `window_witness_of_twin`.
-3. **Fixed modulus:** Even if \(\chi\) is periodic, the incidence test is \(q\mid 6n+1\) on the actual integer. The character predicts the sign of a factor that must occur, not whether a fresh prime hits a lift.
-4. **Prime order:** The argument sums over indices and actual factorizations. In particular the bound for \(B_\chi\) uses the fact that the other member is **\(qr-2\)**. Replacing the index domain by a sparse cubic domain does not preserve the proposed Chen lower bound.
-
-**Likely failure point.** For an ordinary character there is no reason for the \(+1\) factor budget to be small enough. Conversely, even given a favorable bias, an unrestricted Chen lower bound cannot simply be restricted to \(\chi(6n+1)=-1\): the lower bound must survive that selection uniformly at the conductor and scale where the bias is useful. These are coupled requirements. Heath-Brown’s exceptional-zero result is evidence that character bias can matter at twin-prime strength, **not** a source of such characters on demand.
-
-If the strict comparison worked cofinally, it would prove the **boxed condition itself**: the exact charge leaves a row with `score n = twinLo n`, and the existing Lean lemmas supply its window. I do not know an unconditional route to that comparison. The unconditional deliverable is `chen_charge_exact`: it turns the entire composite error on a character-selected Chen set into a disjoint, explicitly bounded factor sum that can be estimated separately.
+The new unconditional step **for this framework** is the scale obstruction: nine small primes already drive the sum of the two marginal densities below the wheel capacity, with a uniform and affordable endpoint error. The positive step in the conditional route is entirely different: Heath-Brown obtains information about primes **at the fixed separation two**. The exceptional-zero hypothesis is not known to hold. Without it or a replacement for that correlation input, the last sixteen levels are precisely where this argument leaves the problem open.

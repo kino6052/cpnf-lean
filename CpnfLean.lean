@@ -9,6 +9,7 @@ import CpnfLean.Correspondence
 import CpnfLean.Coverage
 import CpnfLean.Charge
 import CpnfLean.Wheel
+import CpnfLean.Obstruction
 import CpnfLean.TopBand
 import CpnfLean.Progression
 import CpnfLean.PerPrime
@@ -22,4 +23,5 @@ import CpnfLean.ColumnTelescope
 import CpnfLean.ColumnMarks
 import CpnfLean.Overload
 import CpnfLean.Wheel
+import CpnfLean.Obstruction
 import CpnfLean.Ladder

@@ -1,68 +1,57 @@
-# Attack it: close the boxed gap by a route that avoids the known walls
+# The last gap. Attack it violently, boldly, and on your own terms.
 
-We have reduced the twin conjecture, inside CPNF, to one exact statement. It is machine
-checked (`Coverage.lean`, attached, builds with no `sorry`). **Attack this, creatively, and
-avoid the walls that are already mapped.**
+We have made real progress, and every phase you designed has compiled in Lean with no `sorry`
+and no `axiom`. The machine is now fully assembled and verified. Exactly one thing is missing.
+We are handing it to you without telling you how to approach it — you decide the method, the
+object, the route. Be creative. Do not be afraid of the difficulty. Many problems that looked
+impassable have fallen to a single committed new construction. We verify everything in Lean,
+so you can be maximally bold: a wrong step simply fails to compile and we iterate.
 
-## The exact target (proved equivalent to the twin conjecture)
+## What is already proved (all pushed, all green)
+
+On the block `(N, 2N]`, `N = 2^t`, two single-member columns
+`loMarks N = {n | N < (6n−1).minFac}` and `hiMarks N = {n | N < (6n+1).minFac}`.
+Each mark is a genuine prime. A common mark is a twin inside `window N`.
+
+1. **Telescope** (Phase A): the exact identity
+   `levelSum 0 = 2^t · levelSum t − Σ_{d<t} 2^d · levelTermG d`, for arbitrary subsets.
+2. **Marks are primes** (Phase B, weak form): no PNT-in-progressions needed.
+3. **Local overlap certificate** (Phase C interface): with capacity `U`,
+   `forced S T U t d j = max 0 (|S∩I| + |T∩I| − |U∩I|)`.
+   Proved: `forced_le_children` (a positive bound is never lost to refinement) and
+   `common_of_forced_pos` (one overloaded node at any depth forces a common mark).
+   The finish `boxed_of_cofinalNodeOverload : CofinalNodeOverload → ∀ K, WindowWitness K`
+   is compiled.
+4. **Wheel** (free capacity): rows killed by
+   `(5 ∣ 6n−1 ∧ 7 ∣ 6n+1) ∨ (7 ∣ 6n−1 ∧ 5 ∣ 6n+1)` are exactly `n ≡ 1, 34 (mod 35)`.
+   Proved: `loMarks N ⊆ wheelCap N` and `hiMarks N ⊆ wheelCap N`, so the wheel costs no marks.
+
+## The single remaining statement
+
+Prove, or prove a computable consequence of, the **cofinal local overload**:
 
 ```lean
-WindowWitness K := ∃ h n, 1 ≤ h ∧ 1 ≤ n ∧ K ≤ n ∧ n ≤ window h ∧ h < score n
-windowWitness_iff_oftenDirect : (∀ K, WindowWitness K) ↔ OftenDirect
+def CofinalNodeOverload : Prop :=
+  ∀ T₀ : ℕ, ∃ t d j : ℕ,
+    T₀ ≤ t ∧ d ≤ t ∧ j < 2^d ∧
+    0 < forced (loMarks (2^t)) (hiMarks (2^t)) (wheelCap (2^t)) t d j
 ```
 
-where `score n = min((6n−1).minFac, (6n+1).minFac)` and `window h = (h²−1)/6`.
-In words:
+Equivalently: on cofinally many dyadic nodes, the two columns' marks strictly exceed the
+wheel-reduced capacity. Everything before this is proved; everything after it is proved.
+This is the whole problem, stated exactly.
 
-> For every `K` there is an index `n ≥ K` and a threshold `h` with `6n+1 ≤ h²` and
-> `score n > h`.
+## What we want back
 
-Equivalently: **some index in `[K, (h²−1)/6]` has no prime factor `≤ h` in either member.**
-That is all that is needed. No uniform gaps, no bounded ratios, no twins in every block.
+- Your chosen **route and object**, in your own words — whatever you judge most promising.
+- The **first concrete lemma** we can compile tonight, in the existing
+  `node` / `colCount` / `forced` / `wheelCap` vocabulary (or a new object if you prefer,
+  with its definition).
+- Whether the result is **unconditional** or **conditional on what, exactly**.
+- Where the genuinely new step enters, and what makes it new.
 
-## The gap, measured
+Do not shrink the question, do not rename it, do not settle for a weaker interface unless a
+weaker interface is *provable and still forces unbounded twins*. We want real progress on the
+mathematics, not another equivalence. Go.
 
-- **We can prove** (`score_unbounded`): unbounded `score` at factorial location `n = (h+1)!`.
-- **A sieve gives**: every interval of `h⁵` consecutive indices contains such an `n`
-  (dimension-2 beta sieve, level `D = H/(log H)^10`, uniform in the start point).
-- **Needed**: the witness must satisfy `n ≤ (h²−1)/6`, and the interval must reach beyond `K`.
-
-So the requirement is roughly `h²` instead of `h⁵`: a factor `h³` too strong. Note the
-subtlety: the sieve gives room `h⁵` **but the witness it produces is just above `h` in
-score**, whereas the boxed condition allows an enormous `h` for a given `n`. The boxed
-condition is *not* obviously weaker — it lets `h` be as large as `√(6n)`, i.e. up to the
-twin cutoff.
-
-## The walls already mapped — do not walk into these
-
-1. **Parity.** Any argument that counts prime factors of `6n±1` evenly dies.
-2. **The `≈2` sifting ratio.** At cutoff `√(12X+1)`, survival *is* twindom, so the ratio
-   hits `≈2`, outside every positive lower-bound sieve range.
-3. **Fixed-modulus projection.** Already refuted by us: a fresh prime `q ∤ 6M` hits exactly
-   2 of the `q` lifts of every old residue, so the hit bit is not a function of the old
-   label. Appendix D's finite-subcover step is invalid; do not reuse it.
-4. **The prime order.** Already refuted: the cubic-domain comparison chase has the same
-   primes and residues and produces proper deaths forever. Any argument must use the *full*
-   index set, not the sieve's order.
-
-## What we want — one creative strategy, specified to the lemma
-
-Give **one** attack (or at most two, if genuinely different), chosen for creativity and for
-avoiding all four walls. For the attack, be concrete:
-
-- **The idea in one paragraph**, in the process vocabulary if it helps, but the mathematics
-  must be standard and checkable.
-- **The first lemma**, stated in Lean-ready form using `score`, `window`, `minFac`,
-  `twinLo`, `twinHi` — something finite and provable, that is a genuine step toward the
-  boxed condition. Not a restatement of it.
-- **Why it dodges the four walls**, wall by wall.
-- **The most likely failure point**, named honestly.
-- **What the attack would prove if it worked**: the boxed condition, or a weaker but still
-  new statement?
-
-Be bold. A clever reformulation that turns the boxed condition into something with a
-*known* technique is worth more than a restatement of the barrier. If you believe the boxed
-condition is genuinely out of reach of current mathematics, say so and give the sharpest
-provable statement that *would* have been a step — we will formalize that instead.
-
-Paper and all Lean sources (now including `Coverage.lean`) attached.
+The paper and every Lean source are attached.
