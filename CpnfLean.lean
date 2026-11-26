@@ -10,4 +10,5 @@ import CpnfLean.Coverage
 import CpnfLean.Charge
 import CpnfLean.Wheel
 import CpnfLean.TopBand
+import CpnfLean.Progression
 import CpnfLean.Ladder
