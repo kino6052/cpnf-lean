@@ -1,6 +1,8 @@
 import Mathlib
 import CpnfLean.Overload
 
+open ArithmeticFunction
+
 /-!
 # CPNF — the one missing arithmetic input
 
@@ -37,4 +39,32 @@ noncomputable def largeDivisorTail (x : ℕ) : ℝ :=
 def CofinalLargeDivisorFloor : Prop :=
   ∀ T : ℕ, ∃ t : ℕ, T ≤ t ∧
     -(2^t : ℝ) ≤ largeDivisorTail (2^t)
+
+/-- The telescoping identity behind the reduction: the complete divisor sum on `m` is `Λ m`.
+
+`log m = Σ_{d|m} Λ d` is von Mangoldt's identity, and Möbius inversion turns it into
+`Λ m = Σ_{d|m} μ d · log(m/d)`. So the *truncated* sums `A` (small divisors) and `B` (large
+divisors) add up to something that is nonnegative and mostly zero: it counts prime powers.
+That is why the reduction has no unspecified truncation error. -/
+theorem vonMangoldt_eq_sum_moebius_mul_log (m : ℕ) (hm : 0 < m) :
+    (Λ m : ℝ) = ∑ d ∈ m.divisors, (moebius d : ℝ) * Real.log ((m : ℝ) / (d : ℝ)) := by
+  have hinv := (sum_eq_iff_sum_mul_moebius_eq (R := ℝ)
+    (f := fun d : ℕ => (Λ d : ℝ))
+    (g := fun n : ℕ => if n = 0 then 0 else Real.log (n : ℝ))).mp
+    (fun n hn => by
+      rw [ite_eq_right (Nat.pos_iff_ne_zero.mp hn)]
+      exact @vonMangoldt_sum n) m hm
+  rw [← hinv]
+  rw [Nat.sum_divisorsAntidiagonal
+      (f := fun a b : ℕ => (moebius a : ℝ) * (if b = 0 then 0 else Real.log (b : ℝ)))]
+  refine Finset.sum_congr rfl (fun d hd => ?_)
+  have hdvd : d ∣ m := (Nat.mem_divisors.mp hd).1
+  have hd0 : d ≠ 0 := Nat.pos_iff_ne_zero.mp (Nat.pos_of_dvd_of_pos hdvd hm)
+  have hle : d ≤ m := Nat.le_of_dvd hm hdvd
+  have hne : m / d ≠ 0 := by
+    intro h
+    have := Nat.div_eq_zero_iff.mp h
+    omega
+  rw [ite_eq_right hne, Nat.cast_div hdvd (by exact_mod_cast hd0)]
+
 end CPNF
