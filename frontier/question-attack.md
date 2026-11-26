@@ -1,77 +1,68 @@
-# Frontier call: attacking cofinal window nonemptiness
+# Attack it: close the boxed gap by a route that avoids the known walls
 
-You reviewed this project once before and left us with a clean picture. We
-accepted all of it. Now we want to *work*, not review: your previous answer
-isolated the open proposition. Help us attack it.
+We have reduced the twin conjecture, inside CPNF, to one exact statement. It is machine
+checked (`Coverage.lean`, attached, builds with no `sorry`). **Attack this, creatively, and
+avoid the walls that are already mapped.**
 
-## What is already formalized and building (Lean 4 + Mathlib, no `sorry`)
+## The exact target (proved equivalent to the twin conjecture)
 
-- `stage k` — the CPNF process: blocker set `B`, `sieve B n` (survivors),
-  `Step B n` = least survivor, `advance B c = insert c B`. Nonempty sieve always
-  (`factorial + 1` is coprime to every blocker), so no stage is terminal
-  (proved: `always_a_next_step`).
-- Twin readout, a *readout* of those stages, not a second recursion:
-  `twinLo n = 6n-1`, `twinHi n = 6n+1`, `Admissible B n` (neither `twinLo n` nor
-  `twinHi n` is divisible by any blocker), `window y = (y^2-1)/6`,
-  `twinSieve B y = {n | Admissible B n ∧ n ≤ window y}`,
-  `TwinCertifiedAtt k n = IsLeast (twinSieve (stage k) (maxBlocker k)) n`.
-- Proved: `certifiedAt_admissible`, `certifiedAt_in_window`,
-  `certifiedAt_least`, `window_ge (7 ≤ y → y ≤ window y)`.
-- Three lemmas we formerly had were **false** and are now deleted and documented
-  in `README.md` with counterexamples. Lean refused them and was right:
-  `survives_advance`, `admissible_not_two`, and the bound `y^2-1 ≤ 6y`.
-- We also refuted our own earlier claim "a window of length W needs ≥ W
-  blockers": `{5}` alone kills 3 of the 8 indices at `y = 7`.
+```lean
+WindowWitness K := ∃ h n, 1 ≤ h ∧ 1 ≤ n ∧ K ≤ n ∧ n ≤ window h ∧ h < score n
+windowWitness_iff_oftenDirect : (∀ K, WindowWitness K) ↔ OftenDirect
+```
 
-Our gates deliberately contain **no `Nat.Prime`**. Non-termination in CPNF means
-"no stage is the last", not "there are infinitely many primes". Any `Nat.Prime`
-appears only in a separately-labelled correspondence/bridge layer.
+where `score n = min((6n−1).minFac, (6n+1).minFac)` and `window h = (h²−1)/6`.
+In words:
 
-## Where your last answer left us
+> For every `K` there is an index `n ≥ K` and a threshold `h` with `6n+1 ≤ h²` and
+> `score n > h`.
 
-You proposed a bridge theorem (canonical-prefix invariant + window exactness +
-Bertrand for the converse), and identified **cofinal window nonemptiness**
+Equivalently: **some index in `[K, (h²−1)/6]` has no prime factor `≤ h` in either member.**
+That is all that is needed. No uniform gaps, no bounded ratios, no twins in every block.
 
-    ∀ K ∃ k ≥ K,  A_k ≠ ∅      (A_k = admissible n in [1, W(y_k)])
+## The gap, measured
 
-as the missing statement, plus the deflation that inside the window the negative
-divisibility test *is* an exact primality test. We agree with all of it.
+- **We can prove** (`score_unbounded`): unbounded `score` at factorial location `n = (h+1)!`.
+- **A sieve gives**: every interval of `h⁵` consecutive indices contains such an `n`
+  (dimension-2 beta sieve, level `D = H/(log H)^10`, uniform in the start point).
+- **Needed**: the witness must satisfy `n ≤ (h²−1)/6`, and the interval must reach beyond `K`.
 
-## What we want from this call
+So the requirement is roughly `h²` instead of `h⁵`: a factor `h³` too strong. Note the
+subtlety: the sieve gives room `h⁵` **but the witness it produces is just above `h` in
+score**, whereas the boxed condition allows an enormous `h` for a given `n`. The boxed
+condition is *not* obviously weaker — it lets `h` be as large as `√(6n)`, i.e. up to the
+twin cutoff.
 
-We are not looking for a review. We want the strongest honest progress.
+## The walls already mapped — do not walk into these
 
-1. **Sharpen the gap.** Is cofinal window nonemptiness (a) strictly weaker than
-   unbounded twin primes, (b) equivalent to it, or (c) *a priori* stronger?
-   Settle this if it can be settled. If it is equivalent, say so plainly and we
-   will stop pretending the framing is a bypass.
+1. **Parity.** Any argument that counts prime factors of `6n±1` evenly dies.
+2. **The `≈2` sifting ratio.** At cutoff `√(12X+1)`, survival *is* twindom, so the ratio
+   hits `≈2`, outside every positive lower-bound sieve range.
+3. **Fixed-modulus projection.** Already refuted by us: a fresh prime `q ∤ 6M` hits exactly
+   2 of the `q` lifts of every old residue, so the hit bit is not a function of the old
+   label. Appendix D's finite-subcover step is invalid; do not reuse it.
+4. **The prime order.** Already refuted: the cubic-domain comparison chase has the same
+   primes and residues and produces proper deaths forever. Any argument must use the *full*
+   index set, not the sieve's order.
 
-2. **The exact count you gave us.** `Σ_{S⊆P} (−1)^|S| Σ_{r∈T_S} ⌊(W+d_S−r)/d_S⌋`
-   with `|T_S| = 2^|S|`. Give the precise definition of `T_S` and `d_S`, and the
-   smallest fully-written statement that we can formalize in `ℕ` today without
-   any analytic input. We want the *statement* to be exactly right, not
-   approximately right, since Lean will not forgive a sloppy one.
+## What we want — one creative strategy, specified to the lemma
 
-3. **A constructive attack on cofinal nonemptiness.** Is there any honest route
-   that does not smuggle in analytic input? Specifically:
-   - Can the canonical trajectory's *own* history be used — e.g. persistent
-     records of prior certificates — to force a fresh witness cofinally often,
-     rather than proving directly that windows stay nonempty?
-   - Or does every such attempt collapse into a restatement of twin primes?
-   If so, give the cleanest formal implication and we will formalize it as the
-   honest headline: "no known route, and here is the exact oracle strength".
+Give **one** attack (or at most two, if genuinely different), chosen for creativity and for
+avoiding all four walls. For the attack, be concrete:
 
-4. **One concrete next Lean lemma.** The single smallest true statement that
-   moves us closest to (1). Fully quantified, with hypotheses. We will prove it.
+- **The idea in one paragraph**, in the process vocabulary if it helps, but the mathematics
+  must be standard and checkable.
+- **The first lemma**, stated in Lean-ready form using `score`, `window`, `minFac`,
+  `twinLo`, `twinHi` — something finite and provable, that is a genuine step toward the
+  boxed condition. Not a restatement of it.
+- **Why it dodges the four walls**, wall by wall.
+- **The most likely failure point**, named honestly.
+- **What the attack would prove if it worked**: the boxed condition, or a weaker but still
+  new statement?
 
-## Constraints
+Be bold. A clever reformulation that turns the boxed condition into something with a
+*known* technique is worth more than a restatement of the barrier. If you believe the boxed
+condition is genuinely out of reach of current mathematics, say so and give the sharpest
+provable statement that *would* have been a step — we will formalize that instead.
 
-- Constructive and finite. No Mertens, no covering systems, no density
-  arguments, no `Nat.Prime` in the gates.
-- We would rather have a short true answer than an ambitious unclear one.
-- Be explicit about which steps are unconditional and which are conditional.
-
-## What we will do with the answer
-
-Formalize (2) and (4) in Lean in the existing repo, and record (1) and (3) in
-`PLAN.md` as the frontier's standing verdict on where the framing stops.
+Paper and all Lean sources (now including `Coverage.lean`) attached.
