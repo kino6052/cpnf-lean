@@ -21,4 +21,5 @@ import CpnfLean.ColumnSplit
 import CpnfLean.ColumnTelescope
 import CpnfLean.ColumnMarks
 import CpnfLean.Overload
+import CpnfLean.Wheel
 import CpnfLean.Ladder

@@ -1,67 +1,130 @@
 import Mathlib
+import CpnfLean.Overload
 
 /-!
-# CPNF — the wheel: 48 blocks (rung 2 of the unconditional ladder)
+# CPNF — the wheel: free capacity, proved
 
-The top-band exclusion rests on one finite fact: among any 210 consecutive integers,
-exactly `φ(210) = 48` are coprime to 210. That is what turns "at most `48k` candidates in a
-band of `210k` integers" into a real count.
+The frontier's concrete search direction, made unconditional. A row is *killed* when it
+fails **both** columns by small-prime divisor certificates:
 
-Proof shape (and the Lean lesson): translating the block does **not** preserve coprimality
-directly, so shift one step at a time by induction. The overlapping entries stay put, and the
-entering endpoint `a + 211` has the same gcd to 210 as the leaving endpoint `a + 1`, because
-`gcd (n mod 210) 210 = gcd n 210` (`gcd_mod_self`).
+  `wheelKilled n := (5 ∣ 6n−1 ∧ 7 ∣ 6n+1) ∨ (7 ∣ 6n−1 ∧ 5 ∣ 6n+1)`
 
-This is `φ(210)`-counting only: no primes, no estimates.
+Exactly two classes modulo 35 satisfy this: `n ≡ 1` and `n ≡ 34`. So every 35-row stretch
+loses two units of capacity, at no cost to the marks.
+
+`loMarks_subset_wheelCap` and `hiMarks_subset_wheelCap`: the wheel never throws away a row
+that carries a mark — so `forced` applies with `U = wheelCap N` unchanged.
+
+This is the provable half. The unproved half remains the frontier's: whether the two prime
+counts strictly exceed this reduced capacity on cofinally many nodes. The saving itself must
+not be extrapolated into a twin lower bound.
+
+No `sorry`, no `axiom`.
 -/
 
 namespace CPNF
 
 
-theorem gcd_mod_self (n : ℕ) : (n % 210).gcd 210 = n.gcd 210 := by
-  exact (Nat.gcd_rec 210 n).symm.trans (Nat.gcd_comm 210 n)
+def wheelKilled (n : ℕ) : Prop :=
+  (5 ∣ twinLo n ∧ 7 ∣ twinHi n) ∨ (7 ∣ twinLo n ∧ 5 ∣ twinHi n)
 
-theorem wheel_block (a : ℕ) :
-    ((Finset.Icc (a + 1) (a + 210)).filter (fun b => Nat.Coprime b 210)).card = 48 := by
-  induction a with
-  | zero =>
-    change ((Finset.Icc 1 210).filter (fun b : ℕ => Nat.Coprime b 210)).card = 48
-    decide
-  | succ a ih =>
-    have hend : Nat.Coprime (a + 211) 210 ↔ Nat.Coprime (a + 1) 210 := by
-      have hm : (a + 211) % 210 = (a + 1) % 210 := by
-        rw [show a + 211 = (a + 1) + 210 by omega, Nat.add_mod_right]
-      change (a + 211).gcd 210 = 1 ↔ (a + 1).gcd 210 = 1
-      rw [← gcd_mod_self (a + 211), ← gcd_mod_self (a + 1), hm]
-    refine Eq.trans ?_ ih
-    apply Finset.card_bij (fun x _ => if x = a + 211 then a + 1 else x)
-    · intro x hx
-      obtain ⟨⟨hl, hu⟩, hc⟩ :
-          (a.succ + 1 ≤ x ∧ x ≤ a.succ + 210) ∧ Nat.Coprime x 210 := by
-        simpa only [Finset.mem_filter, Finset.mem_Icc] using hx
-      by_cases h : x = a + 211
-      · subst x
-        rw [if_pos rfl]
-        simp only [Finset.mem_filter, Finset.mem_Icc]
-        exact ⟨⟨by omega, by omega⟩, hend.mp hc⟩
-      · simp only [if_neg h, Finset.mem_filter, Finset.mem_Icc]
-        exact ⟨⟨by omega, by omega⟩, hc⟩
-    · intro x hx y hy he
-      have hxl := (Finset.mem_Icc.mp (Finset.mem_filter.mp hx).1).1
-      have hyl := (Finset.mem_Icc.mp (Finset.mem_filter.mp hy).1).1
-      change (if x = a + 211 then a + 1 else x) =
-        (if y = a + 211 then a + 1 else y) at he
-      split_ifs at he <;> omega
-    · intro y hy
-      obtain ⟨⟨hl, hu⟩, hc⟩ :
-          (a + 1 ≤ y ∧ y ≤ a + 210) ∧ Nat.Coprime y 210 := by
-        simpa only [Finset.mem_filter, Finset.mem_Icc] using hy
-      by_cases h : y = a + 1
-      · subst y
-        refine ⟨a + 211, Finset.mem_filter.mpr ⟨?_, hend.mpr hc⟩, ?_⟩
-        · exact Finset.mem_Icc.mpr ⟨by omega, by omega⟩
-        · rw [if_pos rfl]
-      · refine ⟨y, Finset.mem_filter.mpr ⟨?_, hc⟩, if_neg (by omega)⟩
-        exact Finset.mem_Icc.mpr ⟨by omega, by omega⟩
+instance (n : ℕ) : Decidable (wheelKilled n) := by
+  unfold wheelKilled; infer_instance
+
+def wheelCap (N : ℕ) : Finset ℕ := (blk N).filter (fun n => ¬ wheelKilled n)
+
+theorem no_loMark_of_five {N n : ℕ} (h16 : 16 ≤ N)
+    (hN : n ∈ loMarks N) (h5 : 5 ∣ twinLo n) : False := by
+  unfold loMarks at hN
+  obtain ⟨-, hNlt⟩ := Finset.mem_filter.mp hN
+  have hmin : (twinLo n).minFac ≤ 5 := Nat.minFac_le_of_dvd (by norm_num) h5
+  omega
+
+theorem no_loMark_of_seven_lo {N n : ℕ} (h16 : 16 ≤ N)
+    (hN : n ∈ loMarks N) (h7 : 7 ∣ twinLo n) : False := by
+  unfold loMarks at hN
+  obtain ⟨-, hNlt⟩ := Finset.mem_filter.mp hN
+  have hmin : (twinLo n).minFac ≤ 7 := Nat.minFac_le_of_dvd (by norm_num) h7
+  omega
+
+theorem no_hiMark_of_five_hi {N n : ℕ} (h16 : 16 ≤ N)
+    (hN : n ∈ hiMarks N) (h5 : 5 ∣ twinHi n) : False := by
+  unfold hiMarks at hN
+  obtain ⟨-, hNlt⟩ := Finset.mem_filter.mp hN
+  have hmin : (twinHi n).minFac ≤ 5 := Nat.minFac_le_of_dvd (by norm_num) h5
+  omega
+
+theorem no_hiMark_of_seven {N n : ℕ} (h16 : 16 ≤ N)
+    (hN : n ∈ hiMarks N) (h7 : 7 ∣ twinHi n) : False := by
+  unfold hiMarks at hN
+  obtain ⟨-, hNlt⟩ := Finset.mem_filter.mp hN
+  have hmin : (twinHi n).minFac ≤ 7 := Nat.minFac_le_of_dvd (by norm_num) h7
+  omega
+
+/-- Every marked row survives the wheel: marks are in the block, and a row that carries a mark
+cannot be killed by the wheel's divisor certificates. -/
+theorem loMarks_subset_wheelCap {N : ℕ} (h16 : 16 ≤ N) :
+    loMarks N ⊆ wheelCap N := by
+  intro n hn
+  unfold wheelCap
+  rw [Finset.mem_filter]
+  refine ⟨?_, ?_⟩
+  · unfold loMarks at hn
+    exact Finset.mem_filter.mp hn |>.1
+  · intro hk
+    rcases hk with ⟨h5, -⟩ | ⟨h7, -⟩
+    · exact no_loMark_of_five h16 hn h5
+    · exact no_loMark_of_seven_lo h16 hn h7
+
+theorem hiMarks_subset_wheelCap {N : ℕ} (h16 : 16 ≤ N) :
+    hiMarks N ⊆ wheelCap N := by
+  intro n hn
+  unfold wheelCap
+  rw [Finset.mem_filter]
+  refine ⟨?_, ?_⟩
+  · unfold hiMarks at hn
+    exact Finset.mem_filter.mp hn |>.1
+  · intro hk
+    rcases hk with ⟨_, h7⟩ | ⟨_, h5⟩
+    · exact no_hiMark_of_seven h16 hn h7
+    · exact no_hiMark_of_five_hi h16 hn h5
+
+theorem five_dvd_lo_of_mod {n : ℕ} (h : n % 35 = 1) : 5 ∣ twinLo n := by
+  obtain ⟨k, hk⟩ : ∃ k, n = 35*k + 1 := ⟨n / 35, by omega⟩
+  unfold twinLo
+  rw [hk]
+  have e : 6*(35*k+1) - 1 = 210*k + 5 := by omega
+  rw [e]
+  exact ⟨42*k + 1, by ring⟩
+
+theorem seven_dvd_hi_of_mod {n : ℕ} (h : n % 35 = 1) : 7 ∣ twinHi n := by
+  obtain ⟨k, hk⟩ : ∃ k, n = 35*k + 1 := ⟨n / 35, by omega⟩
+  unfold twinHi
+  rw [hk]
+  have e : 6*(35*k+1) + 1 = 210*k + 7 := by omega
+  rw [e]
+  exact ⟨30*k + 1, by ring⟩
+
+theorem wheelKilled_of_mod_one {n : ℕ} (h : n % 35 = 1) : wheelKilled n :=
+  Or.inl ⟨five_dvd_lo_of_mod h, seven_dvd_hi_of_mod h⟩
+
+theorem seven_dvd_lo_of_mod {n : ℕ} (h : n % 35 = 34) : 7 ∣ twinLo n := by
+  obtain ⟨k, hk⟩ : ∃ k, n = 35*k + 34 := ⟨n / 35, by omega⟩
+  unfold twinLo
+  rw [hk]
+  have e : 6*(35*k+34) - 1 = 210*k + 203 := by omega
+  rw [e]
+  exact ⟨30*k + 29, by ring⟩
+
+theorem five_dvd_hi_of_mod {n : ℕ} (h : n % 35 = 34) : 5 ∣ twinHi n := by
+  obtain ⟨k, hk⟩ : ∃ k, n = 35*k + 34 := ⟨n / 35, by omega⟩
+  unfold twinHi
+  rw [hk]
+  have e : 6*(35*k+34) + 1 = 210*k + 205 := by omega
+  rw [e]
+  exact ⟨42*k + 41, by ring⟩
+
+theorem wheelKilled_of_mod_thirtyfour {n : ℕ} (h : n % 35 = 34) : wheelKilled n :=
+  Or.inr ⟨seven_dvd_lo_of_mod h, five_dvd_hi_of_mod h⟩
 
 end CPNF
